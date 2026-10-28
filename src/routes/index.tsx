@@ -31,7 +31,7 @@ function Home() {
           <h1 id="hero-h" className="max-w-[13ch] text-[48px] font-medium leading-[50px] tracking-[-0.035em] text-white sm:text-[76px] sm:leading-[76px] lg:text-[96px] lg:leading-[92px]">
             Know when GPS can be trusted.
           </h1>
-          <div className="mt-9 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mt-9 flex flex-col items-start gap-7">
             <p className="max-w-md text-[18px] leading-[28px] text-white/80">
               Independent intelligence on GPS jamming and spoofing for drones. A decision before a drone flies, and evidence after an incident.
             </p>
