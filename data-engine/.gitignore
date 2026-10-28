@@ -1,0 +1,6 @@
+*.db
+*.db-wal
+*.db-shm
+export/
+__pycache__/
+*.ubx

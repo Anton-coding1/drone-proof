@@ -1,0 +1,2 @@
+# Keep 90 days of second-by-second data (events are kept for ever). Install with: crontab -e
+15 3 * * * cd /home/pi/witnessmark && /usr/bin/python3 witnessmark_sensor.py prune --keep-days 90 >/dev/null 2>&1

@@ -1,7 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage, pageHead } from "@/components/site/Placeholder";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Page } from "@/components/wm/Page";
+import { Container, PageIntro, Prose, btn } from "@/components/wm/ui";
+import { seo } from "@/lib/seo";
+import { PHOTOS } from "@/lib/photos";
 
 export const Route = createFileRoute("/about")({
-  head: () => pageHead("About", "Why an independent record of GPS interference matters."),
-  component: () => <PlaceholderPage eyebrow="Company" title="About" intro="Why an independent record of GPS interference matters." />,
+  head: () => ({ meta: seo({ title: "About", description: "Witnessmark is an early-stage start-up founded by engineering students in London, building an independent record of GPS jamming and spoofing at street level, starting with drones." }) }),
+  component: About,
 });
+
+function About() {
+  return (
+    <Page overlay>
+      <PageIntro photo={PHOTOS.cityRoof} eyebrow="About" title="A neutral witness for the signals machines rely on." lead="Witnessmark is an early-stage start-up founded by engineering students at Imperial College London. We're building an independent record of GPS jamming and spoofing at street level, starting with drones." />
+      <Container narrow className="py-16">
+        <Prose>
+          <h2>Why we started</h2>
+          <p>Drones increasingly fly where no pilot can see them, and they depend on GPS to know where they are. Meanwhile GPS jamming is rising, including from the counter-drone systems now used to protect public events. When a drone comes down, the cause decides the insurance claim, and today nobody can answer it quickly, consistently and neutrally.</p>
+          <p>A surveyor's <em>witness mark</em> is a fixed reference that lets anyone check a position later. That's what we want to be for drones: an independent reference that both sides can trust, before the flight and after it.</p>
+          <h2>What we're building</h2>
+          <ul>
+            <li><strong>Pre-flight check</strong>: a GO / CAUTION / NO-GO interference check for planned routes.</li>
+            <li><strong>Incident evidence</strong>: independent, tamper-evident evidence of GPS interference for drone claims.</li>
+            <li><strong>Ground sensors</strong>: small receive-only rooftop receivers that hear the low-power jammers aircraft miss. They are in development; they only listen and never transmit.</li>
+            <li><strong>Site monitoring</strong>: the same sensors alerting ports, airports, rail and venues when GPS around them is attacked.</li>
+          </ul>
+          <h2>Where we're going</h2>
+          <p>Satellites and aircraft already watch for interference from above. What's missing is a trustworthy record at street level, where drones fly and where people and infrastructure depend on GPS. We're starting with drones because the need is immediate: flights beyond the pilot's sight are set to become routine and every loss raises the question of cause. The same record then serves insurers and any site that relies on GPS position or time.</p>
+          <h2>Where we are</h2>
+          <p>We're a two-person founding team with a working prototype, a published method and no paying customers yet. This version of the site is a demo: every feature can be tried with your own files or with simulated samples.</p>
+          <p>Witnessmark is independent and is not endorsed by Imperial College London or by any data provider named on this site.</p>
+        </Prose>
+        <div className="mt-12 flex flex-wrap gap-3">
+          <Link to="/demo" className={btn.primary}>Try the demo</Link>
+          <Link to="/product" className={btn.secondary}>How it fits together</Link>
+        </div>
+      </Container>
+    </Page>
+  );
+}

@@ -11,17 +11,27 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as AccessibilityRouteImport } from './routes/accessibility'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DroneproofRouteImport } from './routes/droneproof'
 import { Route as EvidenceRouteImport } from './routes/evidence'
 import { Route as MethodRouteImport } from './routes/method'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as NetworkRouteImport } from './routes/network'
-import { Route as PreFlightRouteImport } from './routes/pre-flight'
+import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProductRouteImport } from './routes/product'
+import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrustRouteImport } from './routes/trust'
+import { Route as UseCasesRouteImport } from './routes/use-cases'
+import { Route as AdminImportRouteImport } from './routes/admin.import'
+import { Route as AnalysisScenarioIdRouteImport } from './routes/analysis.$scenarioId'
+import { Route as PreFlightIndexRouteImport } from './routes/pre-flight.index'
+import { Route as PreFlightCheckRouteImport } from './routes/pre-flight.check'
+import { Route as RoutesIndexRouteImport } from './routes/routes.index'
+import { Route as RoutesCheckRouteImport } from './routes/routes.check'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,14 +43,19 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccessibilityRoute = AccessibilityRouteImport.update({
-  id: '/accessibility',
-  path: '/accessibility',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DroneproofRoute = DroneproofRouteImport.update({
+  id: '/droneproof',
+  path: '/droneproof',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EvidenceRoute = EvidenceRouteImport.update({
@@ -63,9 +78,9 @@ const NetworkRoute = NetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PreFlightRoute = PreFlightRouteImport.update({
-  id: '/pre-flight',
-  path: '/pre-flight',
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -78,6 +93,16 @@ const ProductRoute = ProductRouteImport.update({
   path: '/product',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -88,115 +113,220 @@ const TrustRoute = TrustRouteImport.update({
   path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UseCasesRoute = UseCasesRouteImport.update({
+  id: '/use-cases',
+  path: '/use-cases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminImportRoute = AdminImportRouteImport.update({
+  id: '/admin/import',
+  path: '/admin/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisScenarioIdRoute = AnalysisScenarioIdRouteImport.update({
+  id: '/analysis/$scenarioId',
+  path: '/analysis/$scenarioId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreFlightIndexRoute = PreFlightIndexRouteImport.update({
+  id: '/pre-flight/',
+  path: '/pre-flight/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreFlightCheckRoute = PreFlightCheckRouteImport.update({
+  id: '/pre-flight/check',
+  path: '/pre-flight/check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoutesIndexRoute = RoutesIndexRouteImport.update({
+  id: '/routes/',
+  path: '/routes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoutesCheckRoute = RoutesCheckRouteImport.update({
+  id: '/routes/check',
+  path: '/routes/check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
+  '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/droneproof': typeof DroneproofRoute
   '/evidence': typeof EvidenceRoute
   '/method': typeof MethodRoute
   '/monitor': typeof MonitorRoute
   '/network': typeof NetworkRoute
-  '/pre-flight': typeof PreFlightRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
+  '/use-cases': typeof UseCasesRoute
+  '/admin/import': typeof AdminImportRoute
+  '/analysis/$scenarioId': typeof AnalysisScenarioIdRoute
+  '/pre-flight/check': typeof PreFlightCheckRoute
+  '/routes/check': typeof RoutesCheckRoute
+  '/pre-flight/': typeof PreFlightIndexRoute
+  '/routes/': typeof RoutesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
+  '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/droneproof': typeof DroneproofRoute
   '/evidence': typeof EvidenceRoute
   '/method': typeof MethodRoute
   '/monitor': typeof MonitorRoute
   '/network': typeof NetworkRoute
-  '/pre-flight': typeof PreFlightRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
+  '/use-cases': typeof UseCasesRoute
+  '/admin/import': typeof AdminImportRoute
+  '/analysis/$scenarioId': typeof AnalysisScenarioIdRoute
+  '/pre-flight/check': typeof PreFlightCheckRoute
+  '/routes/check': typeof RoutesCheckRoute
+  '/pre-flight': typeof PreFlightIndexRoute
+  '/routes': typeof RoutesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/accessibility': typeof AccessibilityRoute
+  '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/droneproof': typeof DroneproofRoute
   '/evidence': typeof EvidenceRoute
   '/method': typeof MethodRoute
   '/monitor': typeof MonitorRoute
   '/network': typeof NetworkRoute
-  '/pre-flight': typeof PreFlightRoute
+  '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
+  '/signin': typeof SigninRoute
   '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
+  '/use-cases': typeof UseCasesRoute
+  '/admin/import': typeof AdminImportRoute
+  '/analysis/$scenarioId': typeof AnalysisScenarioIdRoute
+  '/pre-flight/check': typeof PreFlightCheckRoute
+  '/routes/check': typeof RoutesCheckRoute
+  '/pre-flight/': typeof PreFlightIndexRoute
+  '/routes/': typeof RoutesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
-    | '/accessibility'
+    | '/contact'
     | '/demo'
+    | '/droneproof'
     | '/evidence'
     | '/method'
     | '/monitor'
     | '/network'
-    | '/pre-flight'
+    | '/partners'
     | '/privacy'
     | '/product'
+    | '/security'
+    | '/signin'
     | '/terms'
     | '/trust'
+    | '/use-cases'
+    | '/admin/import'
+    | '/analysis/$scenarioId'
+    | '/pre-flight/check'
+    | '/routes/check'
+    | '/pre-flight/'
+    | '/routes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/accessibility'
+    | '/contact'
     | '/demo'
+    | '/droneproof'
     | '/evidence'
     | '/method'
     | '/monitor'
     | '/network'
-    | '/pre-flight'
+    | '/partners'
     | '/privacy'
     | '/product'
+    | '/security'
+    | '/signin'
     | '/terms'
     | '/trust'
+    | '/use-cases'
+    | '/admin/import'
+    | '/analysis/$scenarioId'
+    | '/pre-flight/check'
+    | '/routes/check'
+    | '/pre-flight'
+    | '/routes'
   id:
     | '__root__'
     | '/'
     | '/about'
-    | '/accessibility'
+    | '/contact'
     | '/demo'
+    | '/droneproof'
     | '/evidence'
     | '/method'
     | '/monitor'
     | '/network'
-    | '/pre-flight'
+    | '/partners'
     | '/privacy'
     | '/product'
+    | '/security'
+    | '/signin'
     | '/terms'
     | '/trust'
+    | '/use-cases'
+    | '/admin/import'
+    | '/analysis/$scenarioId'
+    | '/pre-flight/check'
+    | '/routes/check'
+    | '/pre-flight/'
+    | '/routes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AccessibilityRoute: typeof AccessibilityRoute
+  ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
+  DroneproofRoute: typeof DroneproofRoute
   EvidenceRoute: typeof EvidenceRoute
   MethodRoute: typeof MethodRoute
   MonitorRoute: typeof MonitorRoute
   NetworkRoute: typeof NetworkRoute
-  PreFlightRoute: typeof PreFlightRoute
+  PartnersRoute: typeof PartnersRoute
   PrivacyRoute: typeof PrivacyRoute
   ProductRoute: typeof ProductRoute
+  SecurityRoute: typeof SecurityRoute
+  SigninRoute: typeof SigninRoute
   TermsRoute: typeof TermsRoute
   TrustRoute: typeof TrustRoute
+  UseCasesRoute: typeof UseCasesRoute
+  AdminImportRoute: typeof AdminImportRoute
+  AnalysisScenarioIdRoute: typeof AnalysisScenarioIdRoute
+  PreFlightCheckRoute: typeof PreFlightCheckRoute
+  RoutesCheckRoute: typeof RoutesCheckRoute
+  PreFlightIndexRoute: typeof PreFlightIndexRoute
+  RoutesIndexRoute: typeof RoutesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -215,11 +345,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/accessibility': {
-      id: '/accessibility'
-      path: '/accessibility'
-      fullPath: '/accessibility'
-      preLoaderRoute: typeof AccessibilityRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -227,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/droneproof': {
+      id: '/droneproof'
+      path: '/droneproof'
+      fullPath: '/droneproof'
+      preLoaderRoute: typeof DroneproofRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/evidence': {
@@ -257,11 +394,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NetworkRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pre-flight': {
-      id: '/pre-flight'
-      path: '/pre-flight'
-      fullPath: '/pre-flight'
-      preLoaderRoute: typeof PreFlightRouteImport
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -278,6 +415,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -292,23 +443,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/use-cases': {
+      id: '/use-cases'
+      path: '/use-cases'
+      fullPath: '/use-cases'
+      preLoaderRoute: typeof UseCasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/import': {
+      id: '/admin/import'
+      path: '/admin/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/$scenarioId': {
+      id: '/analysis/$scenarioId'
+      path: '/analysis/$scenarioId'
+      fullPath: '/analysis/$scenarioId'
+      preLoaderRoute: typeof AnalysisScenarioIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pre-flight/': {
+      id: '/pre-flight/'
+      path: '/pre-flight'
+      fullPath: '/pre-flight/'
+      preLoaderRoute: typeof PreFlightIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pre-flight/check': {
+      id: '/pre-flight/check'
+      path: '/pre-flight/check'
+      fullPath: '/pre-flight/check'
+      preLoaderRoute: typeof PreFlightCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/routes/': {
+      id: '/routes/'
+      path: '/routes'
+      fullPath: '/routes/'
+      preLoaderRoute: typeof RoutesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/routes/check': {
+      id: '/routes/check'
+      path: '/routes/check'
+      fullPath: '/routes/check'
+      preLoaderRoute: typeof RoutesCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AccessibilityRoute: AccessibilityRoute,
+  ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
+  DroneproofRoute: DroneproofRoute,
   EvidenceRoute: EvidenceRoute,
   MethodRoute: MethodRoute,
   MonitorRoute: MonitorRoute,
   NetworkRoute: NetworkRoute,
-  PreFlightRoute: PreFlightRoute,
+  PartnersRoute: PartnersRoute,
   PrivacyRoute: PrivacyRoute,
   ProductRoute: ProductRoute,
+  SecurityRoute: SecurityRoute,
+  SigninRoute: SigninRoute,
   TermsRoute: TermsRoute,
   TrustRoute: TrustRoute,
+  UseCasesRoute: UseCasesRoute,
+  AdminImportRoute: AdminImportRoute,
+  AnalysisScenarioIdRoute: AnalysisScenarioIdRoute,
+  PreFlightCheckRoute: PreFlightCheckRoute,
+  RoutesCheckRoute: RoutesCheckRoute,
+  PreFlightIndexRoute: PreFlightIndexRoute,
+  RoutesIndexRoute: RoutesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

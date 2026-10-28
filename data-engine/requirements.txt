@@ -1,0 +1,4 @@
+requests>=2.28
+h3>=4.0
+pyubx2>=1.2
+pyserial>=3.5
