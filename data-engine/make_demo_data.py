@@ -44,6 +44,31 @@ def spoofed(s, rnd):
         return dict(lat=51.5007 + drift, spoofing_state=3 if s >= 125 else 1, satellites=18, accuracy_m=0.9)
 
 
+def crash_after_jamming(name, start, lat, lon, seed=7):
+    """Inspection drone: GPS jammed two minutes in, drifts with the wind and comes down about a minute later."""
+    rnd = random.Random(seed)
+    t0 = dt.datetime.fromisoformat(start.replace("Z", "+00:00"))
+    mlat, mlon = 1 / 111320, 1 / (111320 * math.cos(math.radians(lat)))
+    rows = []
+    for s in range(179):
+        if s < 30:    alt, vn, ve = 2 * s, 0, 0
+        elif s < 120: alt, vn, ve = 60 + 2 * math.sin(s / 9), 5.0, 6.0
+        elif s < 150: alt, vn, ve = 60 + rnd.uniform(-1.5, 1.5), -2.5, 4.0
+        else:         alt, vn, ve = max(0.0, 60 - 2.15 * (s - 150)), -3.0, 4.5
+        lat += vn * mlat; lon += ve * mlon
+        if s < 120:    sats, acc, fix, jam = 16 + rnd.randint(0, 3), 0.8 + rnd.random() * 0.6, 3, 1
+        elif s == 120: sats, acc, fix, jam = 17, 1.1, 3, 2
+        elif s == 121: sats, acc, fix, jam = 11, 4.2, 3, 2
+        elif s == 122: sats, acc, fix, jam = 6, 12.5, 2, 3
+        elif s == 123: sats, acc, fix, jam = 3, 28.0, 2, 3
+        else:          sats, acc, fix, jam = rnd.randint(0, 3), 30 + rnd.random() * 40, rnd.choice([0, 1]), 3
+        rows.append([(t0 + dt.timedelta(seconds=s)).strftime("%Y-%m-%dT%H:%M:%SZ"), f"{lat:.6f}", f"{lon:.6f}", f"{alt:.1f}", sats, f"{acc:.2f}", fix, jam, 1])
+    with open(os.path.join(OUT, name), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(FLIGHT_COLS)
+        w.writerows(rows)
+
+
 def write_route(name, points, start=None, venue=None):
     with open(os.path.join(OUT, name), "w", newline="") as f:
         w = csv.writer(f)
@@ -61,10 +86,13 @@ if __name__ == "__main__":
     flight("flight-tromso-local-jammer.csv", "2026-09-16T10:00:00Z", 69.29, 16.03, bad=jammed(120, 239), seed=3)
     flight("flight-gdansk-area-jamming.csv", "2026-09-20T15:00:00Z", 54.38, 18.47, bad=jammed(60, 299), seed=4)
     flight("flight-gdansk-drone-unaffected.csv", "2026-09-20T15:20:00Z", 54.38, 18.47, seed=5)
+    crash_after_jamming("flight-crash-gps-jamming.csv", "2026-09-20T15:05:00Z", 54.395, 18.66)
     # Pre-flight check routes (lat, lon; optional planned_start and event_venue on the first row).
     write_route("route-greenwich-park.csv", [(51.477, -0.001), (51.48, 0.005)], start="2026-10-01T15:00:00Z")
     write_route("route-london-hospitals.csv", [(51.4988, -0.1189), (51.5065, -0.11), (51.508, -0.098), (51.5034, -0.087)], start="2026-10-01T15:00:00Z")
     write_route("route-wembley-match-day.csv", [(51.545, -0.305), (51.556, -0.29), (51.564, -0.265)], start="2026-10-01T15:00:00Z", venue="wembley")
     write_route("route-oxfordshire-survey.csv", [(51.7, -1.3), (51.712, -1.27), (51.724, -1.245)], start="2026-10-01T15:00:00Z")
+    # Medical delivery Hillingdon Hospital -> West Middlesex Hospital: crosses the Heathrow flight restriction zone.
+    write_route("route-medical-heathrow.csv", [(51.5268, -0.4606), (51.5105, -0.4310), (51.4960, -0.3960), (51.4850, -0.3560), (51.4738, -0.3256)], start="2026-11-02T10:00:00Z")
     write_route("route-gdansk-bay.csv", [(54.36, 18.42), (54.38, 18.47), (54.4, 18.53)], start="2026-09-20T15:30:00Z")
     print("Demo data written to", os.path.abspath(OUT))

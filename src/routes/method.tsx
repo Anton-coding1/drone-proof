@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Page } from "@/components/wm/Page";
 import { Container, PageIntro, Prose } from "@/components/wm/ui";
 import { THRESHOLDS as EV, VERDICTS, type VerdictKey } from "@/lib/evidence";
-import { PRIOR, THRESHOLDS as RT, VULNERABILITY, type ConsequenceClass, type VulnKey } from "@/lib/routeRisk";
+import { CELL_KM, PRIOR, THRESHOLDS as RT, VULNERABILITY, type ConsequenceClass, type VulnKey } from "@/lib/routeRisk";
+import { AIRSPACE_COUNTS } from "@/lib/airspace";
 import { METHOD_VERSION, ROUTE_METHOD_VERSION } from "@/lib/site";
 import { seo } from "@/lib/seo";
 
@@ -75,7 +76,16 @@ function Method() {
           <h2 id="pre-flight">Pre-flight decision method {ROUTE_METHOD_VERSION}</h2>
           <p>Each route is cut into sections (250 m to 2 km). For every section the check estimates the chance of losing trustworthy navigation and compares it with a threshold set by what is on the ground. The worst section decides the route.</p>
           <h3>Step 0: hard stops</h3>
-          <p>A notified GNSS-interference area (NOTAM or red AIC area), restricted airspace without permission, or weather outside the drone's limits makes the route NO-GO. Today the operator declares these; automatic NOTAM import is planned.</p>
+          <p>An aerodrome flight restriction zone without permission (checked automatically, below), a height above 120 m without an authorisation, a notified GNSS-interference area (NOTAM or red AIC area), other restricted airspace without permission, or weather outside the drone's limits makes the route NO-GO. The operator declares the last three; automatic NOTAM import is planned.</p>
+          <h3>Airspace (checked automatically)</h3>
+          <p>Every section is checked against the flight restriction zone (FRZ) of each protected UK aerodrome: the {AIRSPACE_COUNTS.protected} CAA certificated, CAA licensed and military aerodromes. Under the Air Navigation Order 2016 (articles 94A and 94B) an FRZ runs from the surface to 2,000 ft and is made of:</p>
+          <ul>
+            <li>the aerodrome traffic zone: a circle of 2 NM (2.5 NM where the longest runway is over 1,850 m), centred on the mid-point of the longest runway;</li>
+            <li>a runway protection zone at each runway threshold: 5 km long along the extended centre line and 1 km wide (1.5 km at Heathrow);</li>
+            <li>the area out to 1 km beyond the aerodrome boundary (approximated as 1 km around each runway);</li>
+            <li>for aerodromes without runway data or a traffic zone: a 2 NM circle.</li>
+          </ul>
+          <p>A section inside an FRZ is NO-GO until the operator confirms they have permission from that aerodrome's air traffic control (for Heathrow, an Off Airfield Drone Permit through the NATS portal, at least 14 days ahead). A section within 3.7 km of any other UK airfield ({AIRSPACE_COUNTS.airfields} listed) is at least CAUTION until the operator confirms they have checked with it. Central London routes carry a note about restricted areas EG R157, R158 and R159, which need NATS approval and whose exact boundaries are not loaded yet. A planned height above 120 m is NO-GO without a CAA operational authorisation.</p>
           <h3>Step 1: chance of interference</h3>
           <p>Start from a base rate for the area — {Object.entries(PRIOR).map(([k, v]) => `${k} ${v * 100}%`).join(", ")} per section-hour — then multiply the odds by each clue (likelihood ratios):</p>
           <ul>
@@ -103,7 +113,7 @@ function Method() {
               </tbody>
             </table>
           </div>
-          <p>Ground consequence currently uses a coarse London distance model (or the operator's choice); census population grids are the next step. The whole route is also checked as one: the combined chance of loss across all sections is held to the strictest class on the route.</p>
+          <p>Ground consequence currently uses a coarse London distance model (or the operator's choice); census population grids are the next step. The whole route is also checked as one: the combined chance of loss is held to the strictest class on the route. Because interference covers an area, neighbouring sections are not independent, so the route is combined in {CELL_KM} km cells (taking the worst section in each). This keeps the result the same whatever section length is chosen.</p>
           <h3>Confidence</h3>
           <ul>
             <li><strong>High</strong>: needs Witnessmark's own interference data near the route, which is still being collected. Not available yet.</li>
@@ -119,6 +129,7 @@ function Method() {
             <li><strong>Flight logs</strong>: supplied by the claimant or operator, fingerprinted on upload.</li>
             <li><strong>Venue locations</strong>: public locations of major London venues. Event calendars are not connected yet.</li>
             <li><strong>Witnessmark's own data</strong>: being collected; not yet used in any result.</li>
+            <li><strong>Airspace</strong>: protected aerodromes from the CAA lists of certificated and licensed aerodromes (October 2026) plus active military airfields; runway coordinates from OurAirports (public domain); zone rules from the Air Navigation Order 2016, articles 94A and 94B. The official shapes are published by NATS (UAS restriction zones, updated every 28 days); importing them is the next step.</li>
             <li><strong>Maps</strong>: © OpenStreetMap contributors (ODbL).</li>
           </ul>
 
@@ -130,6 +141,7 @@ function Method() {
             <li>A fingerprint shows a file hasn't changed since upload. It does not show the log was accurate when recorded.</li>
             <li>Interference is caused by people and is often unannounced. No pre-flight check can catch every case; in-flight monitoring and failsafes remain essential.</li>
             <li>Control-link and video-link jamming are outside this method for now.</li>
+            <li>Airport zones are rebuilt from the published rules, so their edges can differ from the official NATS shapes by a few hundred metres. Prison zones, danger areas, temporary restrictions and NOTAMs are not checked automatically: always check the NATS drone map before flying.</li>
             <li>All weights and thresholds are provisional and have not yet been validated on real claims or flights.</li>
           </ul>
           <p>Questions and challenges to the method are welcome.</p>
@@ -138,6 +150,7 @@ function Method() {
           <ul>
             <li><strong>Site</strong> (Oct 2026): aircraft data can now be imported from our data collector; sparse but clean aircraft data no longer counts against a route.</li>
             <li><strong>Evidence v0.4</strong> (Oct 2026): aircraft readings must be within {EV.skyHexMaxKm} km of the flight; an overlapping reported event counts even when few aircraft were overhead; Low confidence defined for sparse logs; checks renamed E1–E3 and S1–S2; reviewer sign-off and hash-chained audit trail added.</li>
+            <li><strong>Pre-flight v0.3</strong> (Oct 2026): automatic airspace check (aerodrome flight restriction zones, other airfields, 120 m height limit) with permission confirmation; the route total now combines sections in {CELL_KM} km cells, so it no longer changes with the section length; the summary names any hard stop.</li>
             <li><strong>Pre-flight v0.2</strong> (Oct 2026): first published version — probability × vulnerability × consequence, hard stops, confidence rules.</li>
             <li><strong>Evidence v0.3</strong>: confidence levels defined; neutral wording; limitations published.</li>
             <li><strong>Evidence v0.2</strong>: aircraft evidence and the 2×2 finding table added.</li>

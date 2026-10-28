@@ -25,6 +25,7 @@ describe("Demo flight logs land in each box of the finding table", () => {
     ["flight-london-spoofed.csv", "yes-no"],
     ["flight-tromso-local-jammer.csv", "yes-no"],
     ["flight-gdansk-area-jamming.csv", "yes-yes"],
+    ["flight-crash-gps-jamming.csv", "yes-yes"],
     ["flight-gdansk-drone-unaffected.csv", "no-yes"],
   ])("%s → %s", (file, key) => {
     expect(verdict(file)).toBe(key);
@@ -54,7 +55,8 @@ describe("Demo routes give the decisions the demo page promises", () => {
   it.each([
     ["route-greenwich-park.csv", "go"],
     ["route-oxfordshire-survey.csv", "caution"],
-    ["route-london-hospitals.csv", "nogo"],
+    ["route-london-hospitals.csv", "caution"],
+    ["route-medical-heathrow.csv", "nogo"],
     ["route-gdansk-bay.csv", "nogo"],
     ["route-wembley-match-day.csv", "caution"],
   ])("%s → %s", (file, d) => expect(route(file)).toBe(d));

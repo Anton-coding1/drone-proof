@@ -81,7 +81,7 @@ function RoutesPage() {
             </table>
           </div>
           <ul className="mt-8 grid gap-4 text-sm text-muted-foreground md:grid-cols-3">
-            <li className="border-t pt-4"><span className="text-foreground">Hard stops come first.</span> A notified jamming area, restricted airspace without permission or bad weather makes the route NO-GO, whatever the numbers say.</li>
+            <li className="border-t pt-4"><span className="text-foreground">Hard stops come first.</span> Airport no-fly zones are checked automatically and drawn on the map: a route inside one is NO-GO until you confirm you have permission. A notified jamming area, other restricted airspace, flying above 120 m without authorisation or bad weather does the same, whatever the numbers say.</li>
             <li className="border-t pt-4"><span className="text-foreground">Thin data is never GO over people.</span> In populated areas, a Low-confidence section is shown as CAUTION — data-limited.</li>
             <li className="border-t pt-4"><span className="text-foreground">Insufficient data is its own state.</span> Sections without enough aircraft reports are drawn dashed, and say so.</li>
           </ul>

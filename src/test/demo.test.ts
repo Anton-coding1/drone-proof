@@ -8,7 +8,7 @@ describe("Homepage decision demo tells a sensible story", () => {
       ["ordinary", "go", "go"],
       ["match", "caution", "go"],
       ["military", "nogo", "nogo"],
-      ["storm", "nogo", "nogo"],
+      ["storm", "nogo", "caution"],
     ]);
   });
   it("the route-level chance agrees with the decision for the most sensitive ground", () => {

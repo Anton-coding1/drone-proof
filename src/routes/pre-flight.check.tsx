@@ -1,7 +1,9 @@
 import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Trash2, Upload, Pencil, FileDown, Table2, ChevronDown, Loader2, AlertCircle, Satellite } from "lucide-react";
+import { Undo2, Trash2, Upload, Pencil, FileDown, Table2, ChevronDown, Loader2, AlertCircle, Satellite, PlaneLanding, ShieldAlert } from "lucide-react";
+import { ROUTE_METHOD_VERSION } from "@/lib/site";
+import { AIRSPACE_COUNTS, LONDON_RA_NOTE, OPEN_CATEGORY_MAX_M } from "@/lib/airspace";
 import { supabase } from "@/integrations/supabase/client";
 import { Page } from "@/components/wm/Page";
 import { ConfidenceMeter, Eyebrow, StatusPill, btn, type Status } from "@/components/wm/ui";
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/pre-flight/check")({
 type Preset = { id: string; name: string; note: string; points: LatLon[]; start?: string; venue?: string };
 const PRESETS: Preset[] = [
   { id: "hospitals", name: "St Thomas' → Guy's hospital link", note: "2.8 km over central London", points: [[51.4988, -0.1189], [51.5065, -0.11], [51.508, -0.098], [51.5034, -0.087]] },
+  { id: "heathrow", name: "Medical delivery past Heathrow", note: "Hillingdon → West Middlesex hospitals, 11 km", points: [[51.5268, -0.4606], [51.5105, -0.431], [51.496, -0.396], [51.485, -0.356], [51.4738, -0.3256]] },
   { id: "wembley", name: "Wembley corridor on match day", note: "Passes 1 km from Wembley Stadium", points: [[51.545, -0.305], [51.556, -0.29], [51.564, -0.265]], venue: "wembley" },
   { id: "rural", name: "Oxfordshire field survey", note: "Rural, sparse ground", points: [[51.7, -1.3], [51.712, -1.27], [51.724, -1.245]] },
   { id: "baltic", name: "Gdańsk Bay (Baltic demo data)", note: "Simulated jamming event in the database", points: [[54.36, 18.42], [54.38, 18.47], [54.4, 18.53]], start: "2026-09-20T15:30:00Z" },
@@ -41,7 +44,15 @@ function plainSummary(r: RouteResult): string {
   const bad = r.sections.filter((s) => s.decision === "nogo").length;
   const warn = r.sections.filter((s) => s.decision === "caution").length;
   const dataLimited = r.sections.some((s) => s.decision === "caution" && s.rawDecision === "go");
-  if (r.decision === "go") return "Good to fly. Every part of the route is comfortably inside the limit for the area below it.";
+  if (r.hardStops.length) {
+    const zones = r.airspace.filter((h) => h.level === "frz" && !h.permitted).map((h) => h.name);
+    if (zones.length) return `Don't fly this route as planned: it enters the ${zones.join(" and ")} flight restriction zone${zones.length > 1 ? "s" : ""} without permission. Get permission (see below), or re-route around the red area on the map.`;
+    return `Don't fly this route as planned: ${r.hardStops[0]!.replace(/\.$/, "").replace(/^./, (c) => c.toLowerCase())}.`;
+  }
+  const held = r.airspace.filter((h) => h.level === "frz" && h.permitted).map((h) => h.name);
+  if (r.decision === "go") return held.length
+    ? `Good to fly under your ${held.join(" and ")} permission. The GPS risk on every part of the route is comfortably inside the limit for the area below it.`
+    : "Good to fly. Every part of the route is comfortably inside the limit for the area below it.";
   if (r.routeLevelNote) {
     const limit = r.decision === "nogo" ? THRESHOLDS[worst].nogo : THRESHOLDS[worst].go;
     return `${r.decision === "nogo" ? "Don't fly this route as planned." : "Fly with care."} Each part of the route is fine on its own, but over ${r.totalKm.toFixed(1)} km the small chances add up to ${pct(r.pRoute)}, above the ${pct(limit)} limit for ${area} areas. A shorter route or a better-equipped drone helps.`;
@@ -131,6 +142,9 @@ function RouteCheck() {
   const [areaOverride, setAreaOverride] = useState<AreaType | "auto">("auto");
   const [consequenceOverride, setConsequenceOverride] = useState<ConsequenceClass | "auto">("auto");
   const [gates, setGates] = useState<Gates>({ notamRed: false, restrictedNoPermission: false, weatherOutside: false });
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [maxHeightM, setMaxHeightM] = useState(120);
+  const [heightAuthorised, setHeightAuthorised] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [fileErr, setFileErr] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -186,7 +200,9 @@ function RouteCheck() {
     start, durationMin, hexes: sky.data?.hexes ?? [], events: sky.data?.events ?? [],
     activeVenues: LONDON_VENUES.filter((v) => activeVenues.includes(v.id)),
     spaceWeather, denseHighRise, nearMajorRoads, gates, areaOverride, consequenceOverride, lookbackDays,
-  }), [start, durationMin, sky.data, activeVenues, spaceWeather, denseHighRise, nearMajorRoads, gates, areaOverride, consequenceOverride]);
+    permissions, maxHeightM, heightAuthorised,
+  }), [start, durationMin, sky.data, activeVenues, spaceWeather, denseHighRise, nearMajorRoads, gates, areaOverride, consequenceOverride, permissions, maxHeightM, heightAuthorised]);
+  const togglePermission = (id: string) => setPermissions((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const result = useMemo(() => (points.length >= 2 && sky.data ? assessRoute(points, sectionKm, ctx, profile) : null), [points, sectionKm, ctx, profile, sky.data]);
 
@@ -222,9 +238,9 @@ function RouteCheck() {
       <div className="border-b">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-4 px-6 pb-6 pt-10 sm:px-8">
           <div>
-            <Eyebrow>Witnessmark · Pre-flight method v0.2</Eyebrow>
+            <Eyebrow>Witnessmark · Pre-flight method {ROUTE_METHOD_VERSION}</Eyebrow>
             <h1 className="mt-3 text-[30px] leading-[36px] sm:text-[40px] sm:leading-[48px]">Check a route</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Draw or load a route, describe the drone, and get GO / CAUTION / NO-GO for GPS interference on every section.</p>
+            <p className="mt-2 max-w-2xl text-muted-foreground">Draw or load a route, describe the drone, and get GO / CAUTION / NO-GO for GPS interference on every section. Airport no-fly zones are checked automatically.</p>
           </div>
           <Link to="/pre-flight" className={btn.text}>How it works →</Link>
         </div>
@@ -265,6 +281,7 @@ function RouteCheck() {
                 <span className="flex items-center gap-1.5"><span className="h-1.5 w-5 rounded bg-warn" /> CAUTION</span>
                 <span className="flex items-center gap-1.5"><span className="h-1.5 w-5 rounded bg-bad" /> NO-GO</span>
                 <span className="text-subtle">dashed = low confidence</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-bad/70 bg-bad/20" /> airport no-fly zone</span>
               </p>
             </div>
           )}
@@ -295,6 +312,9 @@ function RouteCheck() {
                   <ConfidenceMeter level={result.confidence} />
                 </div>
                 <p className="mt-4 text-[16px] leading-7">{plainSummary(result)}</p>
+                {(result.airspace.length > 0 || result.londonRestricted) && (
+                  <AirspaceBox result={result} permissions={permissions} onToggle={togglePermission} />
+                )}
                 <p className="mt-2 text-sm text-muted-foreground">
                   Chance of losing trustworthy GPS somewhere on the route: <span className="font-mono text-foreground">{/^[<>]/.test(pct(result.pRoute)) ? pct(result.pRoute) : `≈ ${pct(result.pRoute)}`}</span>
                 </p>
@@ -394,12 +414,21 @@ function RouteCheck() {
                 <Field label="Duration (minutes)">
                   <input type="number" min={1} max={600} value={durationMin} onChange={(e) => setDurationMin(Math.max(1, Math.min(600, Number(e.target.value) || 1)))} className={inputCls} />
                 </Field>
+                <Field label="Highest planned height (m above ground)">
+                  <input type="number" min={1} max={2000} value={maxHeightM} onChange={(e) => setMaxHeightM(Math.max(1, Math.min(2000, Number(e.target.value) || 1)))} className={inputCls} />
+                </Field>
                 <Field label="Section length">
                   <select value={sectionKm} onChange={(e) => setSectionKm(Number(e.target.value))} className={inputCls}>
                     <option value={0.25}>250 m</option><option value={0.5}>500 m</option><option value={1}>1 km</option><option value={2}>2 km</option>
                   </select>
                 </Field>
               </div>
+              {maxHeightM > OPEN_CATEGORY_MAX_M && (
+                <div className="mt-3 rounded-lg border border-bad/40 bg-bad/[0.06] p-3">
+                  <p className="text-sm">Above {OPEN_CATEGORY_MAX_M} m (400 ft) you need a CAA operational authorisation (specific category).</p>
+                  <Check checked={heightAuthorised} onChange={() => setHeightAuthorised((v) => !v)} label="I hold an operational authorisation that covers this height" />
+                </div>
+              )}
             </Fieldset>
 
             <Fieldset title="3 · Drone">
@@ -460,21 +489,57 @@ function RouteCheck() {
             </Fieldset>
 
             <Fieldset title="5 · Hard stops">
-              <p className="mb-2 text-xs text-subtle">Any of these makes the whole route NO-GO, whatever the numbers say.</p>
+              <p className="mb-2 text-xs text-subtle">Any of these makes the whole route NO-GO, whatever the numbers say. Airport no-fly zones are checked automatically ({AIRSPACE_COUNTS.protected} protected UK aerodromes); tick the box below for anything else.</p>
               <div className="space-y-2">
                 <Check checked={gates.notamRed} onChange={() => setGates((g) => ({ ...g, notamRed: !g.notamRed }))} label="Route is inside a notified GNSS-interference area (NOTAM or red AIC area)" />
-                <Check checked={gates.restrictedNoPermission} onChange={() => setGates((g) => ({ ...g, restrictedNoPermission: !g.restrictedNoPermission }))} label="Route enters restricted airspace / FRZ without permission" />
+                <Check checked={gates.restrictedNoPermission} onChange={() => setGates((g) => ({ ...g, restrictedNoPermission: !g.restrictedNoPermission }))} label="Route enters other restricted airspace without permission (prison, danger area, temporary restriction or NOTAM)" />
                 <Check checked={gates.weatherOutside} onChange={() => setGates((g) => ({ ...g, weatherOutside: !g.weatherOutside }))} label="Weather is outside the drone's limits" />
               </div>
             </Fieldset>
 
             <div className="px-6 py-6 text-xs leading-5 text-subtle sm:px-8">
-              Decision support only. Aircraft see GPS quality at altitude and can miss low-power jammers near the ground; Witnessmark's own interference data is not yet includedd yet. Ground consequence uses a coarse London model unless you override it. All weights are provisional. <Link to="/method" hash="pre-flight" className="underline">Read the method</Link>.
+              Decision support only. Aircraft see GPS quality at altitude and can miss low-power jammers near the ground; Witnessmark's own interference data is not included yet. Ground consequence uses a coarse London model unless you override it. Airport zones are built from the Air Navigation Order rules and public runway coordinates, so they are close to, but not exactly, the official shapes; prisons, danger areas and NOTAMs are not checked automatically. Always check the NATS drone map before flying. All weights are provisional. <Link to="/method" hash="pre-flight" className="underline">Read the method</Link>.
             </div>
           </div>
         </div>
       </div>
     </Page>
+  );
+}
+
+function AirspaceBox({ result, permissions, onToggle }: { result: RouteResult; permissions: string[]; onToggle: (id: string) => void }) {
+  const blocked = result.airspace.some((h) => h.level === "frz" && !permissions.includes(h.id));
+  return (
+    <div role="region" aria-label="Airspace on this route" className={`mt-4 rounded-xl border p-4 ${blocked ? "border-bad/50 bg-bad/[0.06]" : "border-warn/40 bg-warn/[0.05]"}`}>
+      <p className="flex items-center gap-2 font-medium">
+        <ShieldAlert className={`h-4 w-4 ${blocked ? "text-bad" : "text-warn"}`} aria-hidden="true" />
+        {result.airspace.some((h) => h.level === "frz") ? "This route enters restricted airspace" : "Check the airspace on this route"}
+      </p>
+      <ul className="mt-3 space-y-4">
+        {result.airspace.map((h) => {
+          const on = permissions.includes(h.id);
+          return (
+            <li key={h.id} className="text-sm">
+              <p className="flex items-start gap-2">
+                <PlaneLanding className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span><span className="font-medium text-foreground">{h.name}</span> <span className="text-muted-foreground">· {h.kindLabel}</span></span>
+              </p>
+              <p className="mt-1 pl-6 text-muted-foreground">
+                {h.level === "frz" ? "Enters its flight restriction zone" : "Passes within 3.7 km"} ({h.parts.join(", ")}) on section{h.sections.length > 1 ? "s" : ""} {h.sections.map((i) => i + 1).join(", ")}.
+                {h.level === "frz" ? " Flying here without permission is an offence." : ""}
+              </p>
+              <p className="mt-1 pl-6 text-muted-foreground"><span className="text-foreground">How to get permission:</span> {h.permission}</p>
+              <div className="mt-1 pl-5">
+                <Check checked={on} onChange={() => onToggle(h.id)}
+                  label={h.level === "frz" ? `I have permission from ${h.name} for this flight` : `I've checked with ${h.name} and can fly`} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {result.londonRestricted && <p className="mt-3 border-t pt-3 text-xs leading-5 text-muted-foreground">{LONDON_RA_NOTE}</p>}
+      <p className="mt-3 text-xs text-subtle">Zone shapes are approximate. Confirm on the NATS drone map before flying.</p>
+    </div>
   );
 }
 

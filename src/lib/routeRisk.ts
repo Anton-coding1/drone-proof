@@ -1,9 +1,10 @@
 /**
- * Witnessmark pre-flight check — Pre-flight method v0.2.
+ * Witnessmark pre-flight check — Pre-flight method v0.3.
  * For each route section: P_loss = P_nav × V, judged against thresholds set by the
  * ground consequence class, with hard NO-GO gates on top and a confidence label.
  * Every weight below is a provisional starting value to be calibrated on real data.
  */
+import { airspaceHits, nearCentralLondon, LONDON_RA_NOTE, OPEN_CATEGORY_MAX_M, type Hit } from "./airspace";
 import { distM, type SkyEvent, type SkyHex } from "@/lib/evidence";
 
 export type LatLon = [number, number];
@@ -68,6 +69,11 @@ export type RouteContext = {
   areaOverride: AreaType | "auto";
   consequenceOverride: ConsequenceClass | "auto";
   lookbackDays: number;
+  /** Ids of aerodromes / airfields the operator has permission for (or has checked with). */
+  permissions?: string[];
+  /** Highest planned height above ground, metres. Above 120 m needs a CAA operational authorisation. */
+  maxHeightM?: number;
+  heightAuthorised?: boolean;
 };
 
 export type Driver = { label: string; factor: number };
@@ -80,12 +86,18 @@ export type SectionResult = {
   eventsNearby: number; pInt: number; pEnv: number; pNav: number; v: number; pLoss: number;
   decision: Decision; rawDecision: Decision; confidence: Confidence;
   drivers: Driver[]; gateReasons: string[]; notes: string[]; why: string;
+  airspace: Hit[];
 };
 
 export type RouteResult = {
   sections: SectionResult[]; decision: Decision; confidence: Confidence; pRoute: number;
   totalKm: number; worstIndex: number; bufferM: number; holdoverS: number; v: number;
   vFactors: Driver[]; conditions: string[]; dataAsOf: string | null; method: string; routeLevelNote: string | null;
+  /** Every zone the route enters, merged across sections. */
+  airspace: (Hit & { sections: number[]; permitted: boolean })[];
+  londonRestricted: boolean;
+  /** Hard-stop reasons across the route (deduplicated), for the summary. */
+  hardStops: string[];
 };
 
 // ---------- maths helpers ----------
@@ -212,7 +224,7 @@ export function vulnerability(p: DroneProfile): { v: number; factors: Driver[] }
 const pct = (p: number) => (p < 0.001 ? "<0.1%" : p > 0.995 ? ">99%" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`);
 export { pct };
 
-export function assessSection(mid: LatLon, ctx: RouteContext, v: number) {
+export function assessSection(mid: LatLon, ctx: RouteContext, v: number, seg?: [LatLon, LatLon]) {
   const startMs = ctx.start.getTime();
   const since = startMs - ctx.lookbackDays * 86400000;
   const drivers: Driver[] = [];
@@ -286,14 +298,31 @@ export function assessSection(mid: LatLon, ctx: RouteContext, v: number) {
   const rawDecision = decide(pLoss, consequence);
   let decision = rawDecision;
   const gateReasons: string[] = [];
-  if (ctx.gates.notamRed) gateReasons.push("Inside a notified GNSS-interference area (NOTAM / red AIC area).");
-  if (ctx.gates.restrictedNoPermission) gateReasons.push("Restricted airspace or FRZ without permission.");
-  if (ctx.gates.weatherOutside) gateReasons.push("Weather outside the drone's limits.");
-  if (gateReasons.length) decision = "nogo";
-  else if (decision === "go" && confidence === "Low" && (consequence === "C3" || consequence === "C4")) {
-    decision = "caution";
-    notes.unshift("Data-limited: in populated areas, Low confidence can never produce GO.");
+  const permitted = new Set(ctx.permissions ?? []);
+  const airspace = seg ? airspaceHits(seg[0], seg[1]) : [];
+  let airfieldCaution = false;
+  for (const h of airspace) {
+    if (h.level === "frz") {
+      if (permitted.has(h.id)) notes.unshift(`Inside the ${h.name} flight restriction zone: you've said you have permission. Fly within its conditions.`);
+      else gateReasons.push(`Inside the ${h.name} flight restriction zone (${h.parts.join(", ")}) without permission.`);
+    } else if (!permitted.has(h.id)) {
+      airfieldCaution = true;
+      notes.unshift(`Within ${h.parts[0]!.replace("within ", "")} of ${h.name} airfield. Check with the airfield before flying.`);
+    }
   }
+  if (ctx.gates.notamRed) gateReasons.push("Inside a notified GNSS-interference area (NOTAM / red AIC area).");
+  if (ctx.gates.restrictedNoPermission) gateReasons.push("You marked other restricted airspace (not on the map) without permission.");
+  if (ctx.gates.weatherOutside) gateReasons.push("Weather outside the drone's limits.");
+  if ((ctx.maxHeightM ?? 0) > OPEN_CATEGORY_MAX_M && !ctx.heightAuthorised) gateReasons.push(`Planned height ${ctx.maxHeightM} m is above the ${OPEN_CATEGORY_MAX_M} m limit without a CAA operational authorisation.`);
+  if (gateReasons.length) decision = "nogo";
+  else {
+    if (decision === "go" && confidence === "Low" && (consequence === "C3" || consequence === "C4")) {
+      decision = "caution";
+      notes.unshift("Data-limited: in populated areas, Low confidence can never produce GO.");
+    }
+    if (airfieldCaution) decision = worse(decision, "caution");
+  }
+  if (seg && nearCentralLondon(seg[0], seg[1])) notes.push(LONDON_RA_NOTE);
 
   drivers.sort((a, b) => Math.abs(Math.log(b.factor)) - Math.abs(Math.log(a.factor)));
   const t = THRESHOLDS[consequence];
@@ -304,9 +333,11 @@ export function assessSection(mid: LatLon, ctx: RouteContext, v: number) {
   return {
     area, areaSource, consequence, consequenceSource, prior,
     adsb: { n, k, u90, newest: newest === null ? null : new Date(newest).toISOString() },
-    eventsNearby, pInt, pEnv, pNav, v, pLoss, decision, rawDecision, confidence, drivers, gateReasons, notes, why,
+    eventsNearby, pInt, pEnv, pNav, v, pLoss, decision, rawDecision, confidence, drivers, gateReasons, notes, why, airspace,
   };
 }
+
+export const CELL_KM = 2;
 
 export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteContext, profile: DroneProfile): RouteResult | null {
   const parts = splitRoute(points, sectionKm);
@@ -314,12 +345,22 @@ export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteConte
   const { v, factors } = vulnerability(profile);
   const sections: SectionResult[] = parts.map((p, index) => {
     const mid: LatLon = [(p.start[0] + p.end[0]) / 2, (p.start[1] + p.end[1]) / 2];
-    return { index, start: p.start, end: p.end, mid, lengthKm: p.lengthKm, ...assessSection(mid, ctx, v) };
+    return { index, start: p.start, end: p.end, mid, lengthKm: p.lengthKm, ...assessSection(mid, ctx, v, [p.start, p.end]) };
   });
   let decision: Decision = "go";
   let worstIndex = 0;
   sections.forEach((s, i) => { if (RANK[s.decision] > RANK[decision]) { decision = s.decision; worstIndex = i; } });
-  const pRoute = 1 - sections.reduce((acc, s) => acc * (1 - s.pLoss), 1);
+  // Interference covers an area, so neighbouring sections are not independent. Combine the route in cells of about
+  // CELL_KM (a typical jammer footprint), taking the worst section in each cell. This keeps the route result the
+  // same whatever section length is chosen.
+  const cellMax: number[] = [];
+  let run = 0, worstInCell = 0;
+  for (const s of sections) {
+    worstInCell = Math.max(worstInCell, s.pLoss); run += s.lengthKm;
+    if (run >= CELL_KM - 1e-9) { cellMax.push(worstInCell); run = 0; worstInCell = 0; }
+  }
+  if (run > 0) cellMax.push(worstInCell);
+  const pRoute = 1 - cellMax.reduce((acc, p) => acc * (1 - p), 1);
   const worstClass = sections.reduce<ConsequenceClass>((w, s) => (s.consequence > w ? s.consequence : w), "C1");
   const routeDecision = decide(pRoute, worstClass);
   let routeLevelNote: string | null = null;
@@ -333,7 +374,21 @@ export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteConte
   const newestTimes = sections.map((s) => s.adsb.newest).filter(Boolean) as string[];
   const dataAsOf = newestTimes.length ? newestTimes.sort().at(-1)! : null;
 
+  // Airspace across the whole route.
+  const permitted = new Set(ctx.permissions ?? []);
+  const byId = new Map<string, Hit & { sections: number[]; permitted: boolean }>();
+  for (const s of sections) for (const h of s.airspace) {
+    const cur = byId.get(h.id);
+    if (cur) { cur.sections.push(s.index); for (const p of h.parts) if (!cur.parts.includes(p)) cur.parts.push(p); }
+    else byId.set(h.id, { ...h, parts: [...h.parts], sections: [s.index], permitted: permitted.has(h.id) });
+  }
+  const airspace = [...byId.values()].sort((a, b) => (a.level === b.level ? a.name.localeCompare(b.name) : a.level === "frz" ? -1 : 1));
+  const londonRestricted = sections.some((s) => s.notes.includes(LONDON_RA_NOTE));
+  const hardStops = [...new Set(sections.flatMap((s) => s.gateReasons))];
+
   const conditions: string[] = [];
+  for (const h of airspace) if (h.permitted) conditions.push(h.level === "frz" ? `Carry and follow your ${h.name} permission (and any ATC instructions).` : `Follow what ${h.name} airfield agreed with you.`);
+  if (londonRestricted) conditions.push("Confirm the route is outside R157, R158 and R159, or that you hold NATS approval for them.");
   if (decision !== "go") {
     if (!profile.vlosPilot) conditions.push("Keep the drone within visual line of sight with a pilot ready to fly without GNSS.");
     if (!profile.deadReckoning) conditions.push("Enable a validated non-GNSS fallback (optical flow or visual-inertial odometry) if fitted.");
@@ -342,7 +397,7 @@ export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteConte
     if (ctx.activeVenues.length) conditions.push("Avoid the event window (2 h before to 2 h after) or re-route away from the venue.");
     conditions.push(`Add about ${bufferM} m to your ground-risk buffer for drift during GNSS loss.`);
   }
-  return { sections, decision, confidence, pRoute, totalKm: sections.reduce((a, s) => a + s.lengthKm, 0), worstIndex, bufferM, holdoverS, v, vFactors: factors, conditions, dataAsOf, method: "Pre-flight method v0.2", routeLevelNote };
+  return { sections, decision, confidence, pRoute, totalKm: sections.reduce((a, s) => a + s.lengthKm, 0), worstIndex, bufferM, holdoverS, v, vFactors: factors, conditions, dataAsOf, method: "Pre-flight method v0.3", routeLevelNote, airspace, londonRestricted, hardStops };
 }
 
 export const DEFAULT_PROFILE: DroneProfile = {

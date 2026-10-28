@@ -1,6 +1,7 @@
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import { MapContainer, TileLayer, Polyline, Polygon, Circle, CircleMarker, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { zoneShapes } from "@/lib/airspace";
 import type { LatLon, RouteResult, Venue } from "@/lib/routeRisk";
 
 const COLORS = { go: "#4FB286", caution: "#E0A84A", nogo: "#E5574F" } as const;
@@ -22,6 +23,35 @@ function SizeWatcher() {
     return () => { ro.disconnect(); clearTimeout(t); };
   }, [map]);
   return null;
+}
+
+/** Aerodrome flight restriction zones (red) and other airfields (amber) around the route and the current view. */
+function AirspaceLayer({ points }: { points: LatLon[] }) {
+  const map = useMap();
+  const read = () => { const b = map.getBounds(); return { s: b.getSouth(), w: b.getWest(), n: b.getNorth(), e: b.getEast(), z: map.getZoom() }; };
+  const [view, setView] = useState(read);
+  useMapEvents({ moveend: () => setView(read()), zoomend: () => setView(read()), viewreset: () => setView(read()) });
+  const shapes = useMemo(() => {
+    if (view.z < 8 && points.length < 2) return [];
+    const lats = points.map((p) => p[0]), lons = points.map((p) => p[1]);
+    const b = view.z >= 8 ? { s: view.s, w: view.w, n: view.n, e: view.e } : { s: Infinity, w: Infinity, n: -Infinity, e: -Infinity };
+    if (points.length) { b.s = Math.min(b.s, ...lats); b.n = Math.max(b.n, ...lats); b.w = Math.min(b.w, ...lons); b.e = Math.max(b.e, ...lons); }
+    return zoneShapes(b);
+  }, [view, points]);
+  return (
+    <>
+      {shapes.map((z, i) => {
+        const frz = z.level === "frz";
+        const style = frz
+          ? { color: "#E5574F", weight: 1, opacity: 0.7, fillColor: "#E5574F", fillOpacity: 0.12 }
+          : { color: "#E0A84A", weight: 1, opacity: 0.6, dashArray: "4 4", fillColor: "#E0A84A", fillOpacity: 0.05 };
+        const tip = <Tooltip className="wm-tip" sticky>{frz ? `${z.name}: flight restriction zone (permission needed)` : `${z.name} airfield: check before flying`}</Tooltip>;
+        return z.kind === "circle"
+          ? <Circle key={`${z.id}-${i}`} center={z.c!} radius={z.rM!} pathOptions={style}>{tip}</Circle>
+          : <Polygon key={`${z.id}-${i}`} positions={z.poly!} pathOptions={style}>{tip}</Polygon>;
+      })}
+    </>
+  );
 }
 
 function FitTo({ points, token }: { points: LatLon[]; token: number }) {
@@ -61,6 +91,7 @@ export default function RouteMap({
       <ClickToAdd onAdd={onAdd} enabled={drawing} />
       <SizeWatcher />
       <FitTo points={points} token={fitToken} />
+      <AirspaceLayer points={points} />
 
       {venues.map((v) => {
         const on = activeVenueIds.includes(v.id);

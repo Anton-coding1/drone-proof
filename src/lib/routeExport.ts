@@ -17,7 +17,9 @@ export function assessmentRecord(name: string, points: LatLon[], ctx: RouteConte
       active_venues: ctx.activeVenues.map((v) => v.name), space_weather: ctx.spaceWeather,
       dense_high_rise: ctx.denseHighRise, near_major_roads: ctx.nearMajorRoads, gates: ctx.gates,
       area_override: ctx.areaOverride, consequence_override: ctx.consequenceOverride,
+      permissions_held: ctx.permissions ?? [], max_height_m: ctx.maxHeightM ?? 120, height_authorised: !!ctx.heightAuthorised,
     },
+    airspace: r.airspace.map((h) => ({ id: h.id, name: h.name, level: h.level, parts: h.parts, sections: h.sections.map((i) => i + 1), permission_held: h.permitted })),
     result: {
       decision: DEC[r.decision], confidence: r.confidence, p_route: r.pRoute, total_km: r.totalKm, buffer_m: r.bufferM,
       sections: r.sections.map((s) => ({
@@ -68,7 +70,7 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
   const heading = (t: string) => { y += 3; line(t, 11, true, [20, 30, 50], 6); };
 
   line("Witnessmark", 16, true, [20, 30, 50], 6);
-  line("Witnessmark pre-flight check  ·  Pre-flight method v0.2", 9, false, [90, 90, 90]);
+  line("Witnessmark pre-flight check  ·  Pre-flight method v0.3", 9, false, [90, 90, 90]);
   line(`Generated ${new Date().toISOString().replace("T", " ").slice(0, 16)} UTC  ·  Assessment fingerprint (SHA-256): ${hash}`, 7.5, false, [90, 90, 90], 4);
   doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 6;
 
@@ -77,6 +79,14 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
   y += 2;
   line(`OVERALL: ${DEC[r.decision]}  ·  ${r.confidence} confidence  ·  Chance of navigation loss along the route ~${pct(r.pRoute)}`, 12, true, r.decision === "go" ? [30, 110, 70] : r.decision === "caution" ? [150, 100, 0] : [170, 40, 35], 6);
   if (r.conditions.length) { heading("Conditions"); r.conditions.forEach((c) => line(`- ${c}`)); }
+
+  heading("Airspace");
+  if (r.hardStops.length) r.hardStops.forEach((h) => line(`- HARD STOP: ${h}`, 9.5, false, [170, 40, 35]));
+  if (r.airspace.length) r.airspace.forEach((h) => line(`- ${h.name} (${h.kindLabel}): ${h.parts.join(", ")}. ${h.permitted ? "Operator states permission is held." : h.permission}`, 9));
+  else line("- No aerodrome flight restriction zones or airfields on the route (automatic check of 108 protected UK aerodromes; shapes approximate).", 9);
+  if (r.londonRestricted) line("- Central London restricted areas R157-R159: boundaries not checked automatically; confirm with the NATS drone map.", 9);
+  line(`- Planned max height: ${ctx.maxHeightM ?? 120} m above ground${(ctx.maxHeightM ?? 0) > 120 ? (ctx.heightAuthorised ? " (operator states a CAA operational authorisation covers this)" : " (above the 120 m open-category limit)") : ""}.`, 9);
+  line("- Prisons, danger areas and temporary restrictions (NOTAMs) are not checked automatically: check the NATS drone map before flying.", 8.6, false, [60, 60, 60], 4.2);
 
   heading("Sections");
   for (const s of r.sections) {
@@ -99,10 +109,11 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
   heading("Data and limitations");
   [
     `Aircraft data: Stanford GPS Laboratory (rfi.stanford.edu), CC BY-NC 4.0. Newest reading used: ${r.dataAsOf ? r.dataAsOf.replace("T", " ").slice(0, 16) + " UTC" : "none available"}.`,
+    "Airspace: aerodrome zones are built from ANO 2016 arts 94A/94B and public runway coordinates (OurAirports); they approximate the official NATS shapes.",
     "Event calendars are not connected; venue events are as declared by the operator.",
     "Population (ground consequence) uses a coarse London distance model unless overridden; replace with ONS/UKCEH census grids before operational use.",
     "Aircraft observe GPS quality at altitude and can miss low-power ground-level jammers. Witnessmark's own interference data is still being collected.",
-    "All weights and thresholds are provisional (Pre-flight method v0.2) and have not been validated against real flights.",
+    "All weights and thresholds are provisional (Pre-flight method v0.3) and have not been validated against real flights.",
     "Decision support only. The remote pilot and operator remain responsible for the flight and for their CAA safety case.",
   ].forEach((t) => line(`- ${t}`, 8.6, false, [60, 60, 60], 4.2));
 
