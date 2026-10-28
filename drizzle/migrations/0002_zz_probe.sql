@@ -1,0 +1,2 @@
+-- The content of this migration cannot be applied: it created a temporary probe table that has since been removed.
+-- CREATE TABLE public.zz_probe (id int);
