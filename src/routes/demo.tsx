@@ -42,7 +42,12 @@ function Demo() {
         lead="Every feature accepts a spreadsheet, CSV or Excel. Use your own, or download the samples below: each one is simulated and labelled with the result you should see."
       >
         <p className="mt-4 max-w-2xl text-sm text-subtle">We're currently collecting our own interference data. Today Witnessmark uses public aircraft reports and the files you upload; the demo samples are simulated.</p>
-        <div className="mt-10 max-w-3xl"><DropAnything /></div>
+        <ol className="mt-8 grid max-w-3xl gap-3 text-sm sm:grid-cols-3">
+          {["Download a sample below (Excel or CSV), or use your own file", "Drop it in the box, or press Choose a file", "Witnessmark spots what it is and shows the result"].map((t, i) => (
+            <li key={t} className="flex gap-3 rounded-xl border bg-card p-4"><span className="font-mono text-signal">{i + 1}</span><span className="text-muted-foreground">{t}</span></li>
+          ))}
+        </ol>
+        <div className="mt-6 max-w-3xl"><DropAnything /></div>
         <ul className="mt-8 flex flex-wrap gap-3">
           {SECTIONS.map((s) => (
             <li key={s.id}><a href={`#${s.id}`} className={btn.secondary}><s.icon className="h-4 w-4" aria-hidden="true" />{s.name}</a></li>

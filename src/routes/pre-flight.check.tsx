@@ -10,7 +10,7 @@ import { TABLE_ACCEPT, checkTableName, readTableFile } from "@/lib/tabular";
 import { takePendingFile } from "@/lib/pendingFile";
 import {
   AREA_LABEL, DEFAULT_PROFILE, LONDON_VENUES, THRESHOLDS, VULNERABILITY, assessRoute, kmBetween, pct,
-  type AreaType, type ConsequenceClass, type DroneProfile, type Gates, type LatLon, type RouteContext, type SpaceWeather, type VulnKey,
+  type AreaType, type ConsequenceClass, type DroneProfile, type Gates, type LatLon, type RouteContext, type RouteResult, type SpaceWeather, type VulnKey,
 } from "@/lib/routeRisk";
 import { downloadCsv, downloadPdf } from "@/lib/routeExport";
 
@@ -30,6 +30,26 @@ const PRESETS: Preset[] = [
 ];
 
 const DEC_STATUS: Record<"go" | "caution" | "nogo", Status> = { go: "go", caution: "caution", nogo: "nogo" };
+
+const GROUND_PLAIN: Record<ConsequenceClass, string> = { C1: "open ground", C2: "few people", C3: "built-up", C4: "very busy" };
+const DATA_PLAIN: Record<"High" | "Medium" | "Low", string> = { High: "good data", Medium: "some data", Low: "little data" };
+
+/** One plain-English sentence explaining the decision. */
+function plainSummary(r: RouteResult): string {
+  const worst = r.sections.reduce<ConsequenceClass>((w, s) => (s.consequence > w ? s.consequence : w), "C1");
+  const area = GROUND_PLAIN[worst];
+  const bad = r.sections.filter((s) => s.decision === "nogo").length;
+  const warn = r.sections.filter((s) => s.decision === "caution").length;
+  const dataLimited = r.sections.some((s) => s.decision === "caution" && s.rawDecision === "go");
+  if (r.decision === "go") return "Good to fly. Every part of the route is comfortably inside the limit for the area below it.";
+  if (r.routeLevelNote) {
+    const limit = r.decision === "nogo" ? THRESHOLDS[worst].nogo : THRESHOLDS[worst].go;
+    return `${r.decision === "nogo" ? "Don't fly this route as planned." : "Fly with care."} Each part of the route is fine on its own, but over ${r.totalKm.toFixed(1)} km the small chances add up to ${pct(r.pRoute)}, above the ${pct(limit)} limit for ${area} areas. A shorter route or a better-equipped drone helps.`;
+  }
+  if (r.decision === "nogo") return `Don't fly this route as planned. ${bad} of ${r.sections.length} parts are over the limit for the area below them. Re-plan, wait, or use a better-equipped drone.`;
+  if (dataLimited) return `Fly with care. There's too little aircraft data here to call it GO over ${area} areas, so Witnessmark plays safe.`;
+  return `Fly with care. ${warn} of ${r.sections.length} parts are close to the limit for the area below them. Keep a pilot ready to take over.`;
+}
 
 function nextHourLocal() {
   const d = new Date(Date.now() + 3600000);
@@ -255,7 +275,14 @@ function RouteCheck() {
           {/* Verdict */}
           <section aria-live="polite" className="border-b px-6 py-6 sm:px-8">
             {points.length < 2 ? (
-              <p className="text-muted-foreground">Add at least two points to the map, load an example route or upload a CSV to see a result.</p>
+              <div className="text-muted-foreground">
+                <p className="text-foreground">Add a route to get a decision.</p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  <li>· Press <span className="text-foreground">Draw</span> and click at least two points on the map, or</li>
+                  <li>· pick an <span className="text-foreground">example route</span> below, or</li>
+                  <li>· <span className="text-foreground">upload a spreadsheet</span> (CSV or Excel) with lat and lon columns.</li>
+                </ul>
+              </div>
             ) : sky.isLoading ? (
               <p className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Checking aircraft data along the route…</p>
             ) : sky.error ? (
@@ -267,16 +294,15 @@ function RouteCheck() {
                   <StatusPill status={DEC_STATUS[result.decision]} size="lg" />
                   <ConfidenceMeter level={result.confidence} />
                 </div>
-                <p className="mt-3 text-[15px]">
-                  {result.routeLevelNote
-                    ? result.routeLevelNote
-                    : result.decision === "go"
-                      ? "Every section is below the GO threshold for the ground beneath it."
-                      : `${result.sections.filter((s) => s.decision !== "go").length} of ${result.sections.length} sections need attention. Worst: section ${result.worstIndex + 1}.`}
-                  {" "}Chance of losing trustworthy navigation somewhere on the route: <span className="font-mono">{/^[<>]/.test(pct(result.pRoute)) ? pct(result.pRoute) : `≈ ${pct(result.pRoute)}`}</span>.
+                <p className="mt-4 text-[16px] leading-7">{plainSummary(result)}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Chance of losing trustworthy GPS somewhere on the route: <span className="font-mono text-foreground">{/^[<>]/.test(pct(result.pRoute)) ? pct(result.pRoute) : `≈ ${pct(result.pRoute)}`}</span>
                 </p>
-                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] text-subtle">
-                  Aircraft data as of {result.dataAsOf ? result.dataAsOf.replace("T", " ").slice(0, 16) + " UTC" : "— none for this area and window"}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {result.confidence === "Low" ? "Low confidence: there's little aircraft data near this route, so treat the result as a rough guide." : result.confidence === "Medium" ? "Medium confidence: backed by recent aircraft reports near the route." : "High confidence."}
+                </p>
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-subtle">
+                  {result.dataAsOf ? `Aircraft data up to ${result.dataAsOf.replace("T", " ").slice(0, 16)} UTC` : "No aircraft reports for this area in the last 30 days"}
                 </p>
                 {result.conditions.length > 0 && (
                   <div className="mt-5">
@@ -301,7 +327,7 @@ function RouteCheck() {
           {result && (
             <section className="border-b px-6 py-6 sm:px-8" aria-labelledby="sections-h">
               <h2 id="sections-h" className="text-lg">Sections</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Select a section for the reasons behind it.</p>
+              <p className="mt-1 text-sm text-muted-foreground">The route is cut into short pieces. Tap one to see why it got its result.</p>
               <ol className="mt-4 divide-y rounded-lg border">
                 {result.sections.map((s) => (
                   <li key={s.index}>
@@ -309,7 +335,7 @@ function RouteCheck() {
                       className={`flex w-full items-center gap-3 px-3 py-3 text-left text-sm hover:bg-foreground/[0.04] ${selected === s.index ? "bg-foreground/[0.05]" : ""}`}>
                       <span className="w-6 font-mono text-subtle">{s.index + 1}</span>
                       <StatusPill status={DEC_STATUS[s.decision]} size="sm" />
-                      <span className="flex-1 text-muted-foreground">{s.lengthKm.toFixed(2)} km · {s.consequence} · {s.confidence}</span>
+                      <span className="flex-1 text-muted-foreground">{s.lengthKm.toFixed(2)} km · {GROUND_PLAIN[s.consequence]} · {DATA_PLAIN[s.confidence]}</span>
                       <span className="font-mono text-xs">{pct(s.pLoss)}</span>
                       <ChevronDown className={`h-4 w-4 text-subtle transition-transform ${selected === s.index ? "rotate-180" : ""}`} />
                     </button>

@@ -11,6 +11,19 @@ function ClickToAdd({ onAdd, enabled }: { onAdd: (p: LatLon) => void; enabled: b
   return null;
 }
 
+/** Leaflet only measures its box once; re-measure whenever the layout changes so tiles fill it. */
+function SizeWatcher() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(el);
+    const t = setTimeout(() => map.invalidateSize(), 250);
+    return () => { ro.disconnect(); clearTimeout(t); };
+  }, [map]);
+  return null;
+}
+
 function FitTo({ points, token }: { points: LatLon[]; token: number }) {
   const map = useMap();
   useEffect(() => {
@@ -46,6 +59,7 @@ export default function RouteMap({
         maxZoom={19}
       />
       <ClickToAdd onAdd={onAdd} enabled={drawing} />
+      <SizeWatcher />
       <FitTo points={points} token={fitToken} />
 
       {venues.map((v) => {
