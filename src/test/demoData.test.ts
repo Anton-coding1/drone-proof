@@ -55,7 +55,7 @@ describe("Demo routes give the decisions the demo page promises", () => {
   it.each([
     ["route-greenwich-park.csv", "go"],
     ["route-oxfordshire-survey.csv", "caution"],
-    ["route-london-hospitals.csv", "caution"],
+    ["route-london-hospitals.csv", "go"],
     ["route-medical-heathrow.csv", "nogo"],
     ["route-gdansk-bay.csv", "nogo"],
     ["route-wembley-match-day.csv", "caution"],

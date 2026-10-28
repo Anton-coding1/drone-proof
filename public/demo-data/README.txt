@@ -4,7 +4,7 @@ Easiest: drop any of them on the "Try it" page and Witnessmark works out what it
 
 PRE-FLIGHT CHECK  (upload on Pre-flight check > "Upload a route")
   route-greenwich-park.csv       -> GO
-  route-london-hospitals.csv     -> CAUTION (over very busy ground even a small chance is above the strict limit)
+  route-london-hospitals.csv     -> GO (plenty of recent, clean aircraft data; note about central London restricted areas)
   route-medical-heathrow.csv     -> NO-GO (enters the Heathrow flight restriction zone; tick "I have permission" to see the GPS result)
   route-wembley-match-day.csv    -> CAUTION (sets an event at Wembley Stadium)
   route-oxfordshire-survey.csv   -> CAUTION (no aircraft data nearby: thin data is never GO over people)

@@ -72,6 +72,12 @@ describe("Airspace in the pre-flight decision", () => {
     expect(assessRoute(pts, 0.5, { ...base, maxHeightM: 150, heightAuthorised: true }, prof)!.decision).not.toBe("nogo");
   });
 
+  it("40 clean aircraft reports lower the risk, never raise it", () => {
+    const hour = new Date(base.start.getTime() - 3600000).toISOString();
+    const r = assessRoute([[51.4988, -0.1189], [51.5034, -0.087]], 0.5, { ...base, hexes: [{ hour, lat: 51.5007, lon: -0.1246, low_quality_count: 0, total_count: 40 }] }, prof)!;
+    for (const s of r.sections) expect(s.drivers.every((d) => d.factor <= 1)).toBe(true);
+  });
+
   it("the route result does not depend on the section length chosen", () => {
     const pts: LatLon[] = [[51.553, -0.285], [51.455, -0.02]];
     const p = [0.25, 0.5, 1, 2].map((km) => assessRoute(pts, km, base, prof)!.pRoute);

@@ -89,7 +89,7 @@ function Method() {
           <h3>Step 1: chance of interference</h3>
           <p>Start from a base rate for the area — {Object.entries(PRIOR).map(([k, v]) => `${k} ${v * 100}%`).join(", ")} per section-hour — then multiply the odds by each clue (likelihood ratios):</p>
           <ul>
-            <li>Aircraft within 10 km over the last 30 days, judged with a Beta posterior: at least 20% degraded even on the cautious lower bound ×200; at least 5% ×30; up to 20% possible (90% upper bound) ×10; up to 5% ×3; clean with 20+ reports ×0.8. Fewer than 5 reports, or fewer than 20 with none degraded, count as no evidence either way; they lower the confidence instead.</li>
+            <li>Aircraft within 10 km over the last 30 days, judged with a Beta posterior: at least 20% degraded even on the cautious lower bound ×200; at least 5% ×30; up to 20% possible (90% upper bound, at least one degraded report) ×10; up to 5% ×3; clean with 20+ reports ×0.8. Fewer than 5 reports, or fewer than 20 with none degraded, count as no evidence either way; they lower the confidence instead.</li>
             <li>Reported jamming/spoofing event within 50 km: last 24 hours ×5, last 7 days ×2.</li>
             <li>An event at a major venue during the flight: within 2 km ×5, within 5 km ×2.</li>
             <li>Route near major roads (in-car jammers) ×1.5.</li>
@@ -150,7 +150,7 @@ function Method() {
           <ul>
             <li><strong>Site</strong> (Oct 2026): aircraft data can now be imported from our data collector; sparse but clean aircraft data no longer counts against a route.</li>
             <li><strong>Evidence v0.4</strong> (Oct 2026): aircraft readings must be within {EV.skyHexMaxKm} km of the flight; an overlapping reported event counts even when few aircraft were overhead; Low confidence defined for sparse logs; checks renamed E1–E3 and S1–S2; reviewer sign-off and hash-chained audit trail added.</li>
-            <li><strong>Pre-flight v0.3</strong> (Oct 2026): automatic airspace check (aerodrome flight restriction zones, other airfields, 120 m height limit) with permission confirmation; the route total now combines sections in {CELL_KM} km cells, so it no longer changes with the section length; the summary names any hard stop.</li>
+            <li><strong>Pre-flight v0.3</strong> (Oct 2026): automatic airspace check (aerodrome flight restriction zones, other airfields, 120 m height limit) with permission confirmation; the route total now combines sections in {CELL_KM} km cells, so it no longer changes with the section length; the summary names any hard stop; clean aircraft data (no degraded reports) can no longer count as a warning sign.</li>
             <li><strong>Pre-flight v0.2</strong> (Oct 2026): first published version — probability × vulnerability × consequence, hard stops, confidence rules.</li>
             <li><strong>Evidence v0.3</strong>: confidence levels defined; neutral wording; limitations published.</li>
             <li><strong>Evidence v0.2</strong>: aircraft evidence and the 2×2 finding table added.</li>

@@ -251,8 +251,9 @@ export function assessSection(mid: LatLon, ctx: RouteContext, v: number, seg?: [
   if (n < 5 || (n < 20 && k === 0)) { /* no evidence either way */ }
   else if (n >= 20 && l10 >= 0.2) add(`Aircraft nearby: at least ${pct(l10)} with degraded GPS (strong evidence, ${n} reports)`, 200);
   else if (n >= 20 && l10 >= 0.05) add(`Aircraft nearby: at least ${pct(l10)} with degraded GPS (${n} reports)`, 30);
-  else if (u90 >= 0.2) add(`Aircraft nearby: up to ${pct(u90)} with degraded GPS (90% bound, ${n} reports)`, 10);
-  else if (u90 >= 0.05) add(`Aircraft nearby: up to ${pct(u90)} with degraded GPS (90% bound, ${n} reports)`, 3);
+  // The "up to" rules need at least one degraded report: zero degraded out of n is clean, never a warning sign.
+  else if (k > 0 && u90 >= 0.2) add(`Aircraft nearby: up to ${pct(u90)} with degraded GPS (90% bound, ${k} of ${n} reports degraded)`, 10);
+  else if (k > 0 && u90 >= 0.05) add(`Aircraft nearby: up to ${pct(u90)} with degraded GPS (90% bound, ${k} of ${n} reports degraded)`, 3);
   else if (n >= 20) add(`Aircraft nearby: clean (${n} reports, ≤ ${pct(u90)} degraded)`, 0.8);
   if (n < 20) notes.push(`Only ${n} aircraft reports within 10 km in the last ${ctx.lookbackDays} days.`);
 
