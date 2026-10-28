@@ -1,0 +1,1 @@
+CREATE TABLE public.zz_probe (id int);

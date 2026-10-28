@@ -14,7 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      drone_points: {
+        Row: {
+          accuracy_m: number | null
+          alt_m: number | null
+          fix_type: number | null
+          id: number
+          jamming_state: number | null
+          lat: number
+          lon: number
+          satellites: number | null
+          scenario_id: string
+          spoofing_state: number | null
+          t: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          alt_m?: number | null
+          fix_type?: number | null
+          id?: number
+          jamming_state?: number | null
+          lat: number
+          lon: number
+          satellites?: number | null
+          scenario_id: string
+          spoofing_state?: number | null
+          t: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          alt_m?: number | null
+          fix_type?: number | null
+          id?: number
+          jamming_state?: number | null
+          lat?: number
+          lon?: number
+          satellites?: number | null
+          scenario_id?: string
+          spoofing_state?: number | null
+          t?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drone_points_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenarios: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_sha256: string | null
+          id: string
+          is_simulated: boolean
+          location_name: string | null
+          name: string
+          source_filename: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_sha256?: string | null
+          id?: string
+          is_simulated?: boolean
+          location_name?: string | null
+          name: string
+          source_filename?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_sha256?: string | null
+          id?: string
+          is_simulated?: boolean
+          location_name?: string | null
+          name?: string
+          source_filename?: string | null
+        }
+        Relationships: []
+      }
+      sky_events: {
+        Row: {
+          end_time: string
+          id: string
+          lat: number
+          lon: number
+          start_time: string
+          type: string
+        }
+        Insert: {
+          end_time: string
+          id?: string
+          lat: number
+          lon: number
+          start_time: string
+          type: string
+        }
+        Update: {
+          end_time?: string
+          id?: string
+          lat?: number
+          lon?: number
+          start_time?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      sky_hexes: {
+        Row: {
+          hour: string
+          id: string
+          lat: number
+          lon: number
+          low_quality_count: number
+          total_count: number
+        }
+        Insert: {
+          hour: string
+          id?: string
+          lat: number
+          lon: number
+          low_quality_count?: number
+          total_count?: number
+        }
+        Update: {
+          hour?: string
+          id?: string
+          lat?: number
+          lon?: number
+          low_quality_count?: number
+          total_count?: number
+        }
+        Relationships: []
+      }
+      zz_probe: {
+        Row: {
+          id: number | null
+        }
+        Insert: {
+          id?: number | null
+        }
+        Update: {
+          id?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
