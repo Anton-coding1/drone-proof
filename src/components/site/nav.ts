@@ -5,7 +5,7 @@ export interface NavItem {
   title: string;
   description: string;
   to: string;
-  hash?: string;
+  hash?: string | undefined;
   icon: LucideIcon;
 }
 
@@ -58,7 +58,7 @@ export const navGroups: NavGroup[] = [
   },
 ];
 
-export const allPages: { title: string; to: string; hash?: string }[] = [
+export const allPages: { title: string; to: string; hash?: string | undefined }[] = [
   { title: "Home", to: "/" },
   ...navGroups.flatMap((g) => g.items.map((i) => ({ title: i.title, to: i.to, hash: i.hash }))),
   { title: "About", to: "/about" },
