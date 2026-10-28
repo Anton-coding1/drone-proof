@@ -12,26 +12,23 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
+import { LogoMark } from "@/components/site/Logo";
+import { Button } from "@/components/ui/button";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
+    <section className="container-wm flex min-h-[70vh] flex-col items-start justify-center py-24">
+      <LogoMark className="h-10 w-10 text-subtle" />
+      <p className="eyebrow mt-6 font-mono">404</p>
+      <h1 className="mt-2 text-4xl md:text-5xl">This page isn't on the map.</h1>
+      <p className="mt-4 max-w-md text-muted-foreground">The address may be mistyped, or the page has moved.</p>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button asChild><Link to="/">Back to home</Link></Button>
+        <Button asChild variant="secondary"><Link to="/product">See the product</Link></Button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -43,33 +40,15 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
+    <section className="container-wm flex min-h-[70vh] flex-col items-start justify-center py-24">
+      <LogoMark className="h-10 w-10 text-bad" />
+      <h1 className="mt-6 text-4xl">Signal lost.</h1>
+      <p className="mt-4 max-w-md text-muted-foreground">Something went wrong loading this page. Try again, or head back home.</p>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button onClick={() => { router.invalidate(); reset(); }}>Try again</Button>
+        <Button asChild variant="secondary"><a href="/">Back to home</a></Button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -78,21 +57,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Witnessmark — An independent record of GPS interference" },
+      { name: "description", content: "Street-level record of GPS jamming and spoofing for pre-flight checks, incident evidence and site monitoring." },
+      { property: "og:title", content: "Witnessmark" },
+      { property: "og:description", content: "Street-level record of GPS jamming and spoofing, turned into decisions." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Witnessmark" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "theme-color", content: "#08090A" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" },
+      { rel: "preconnect", href: "https://images.unsplash.com" },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
@@ -103,12 +83,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en-GB" className="dark">
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
+        <Header />
+        <main id="main" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
+        <Footer />
         <Scripts />
       </body>
     </html>
@@ -117,10 +101,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );

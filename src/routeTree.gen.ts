@@ -10,33 +10,193 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AccessibilityRouteImport } from './routes/accessibility'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as EvidenceRouteImport } from './routes/evidence'
+import { Route as MethodRouteImport } from './routes/method'
+import { Route as MonitorRouteImport } from './routes/monitor'
+import { Route as NetworkRouteImport } from './routes/network'
+import { Route as PreFlightRouteImport } from './routes/pre-flight'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProductRouteImport } from './routes/product'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrustRouteImport } from './routes/trust'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessibilityRoute = AccessibilityRouteImport.update({
+  id: '/accessibility',
+  path: '/accessibility',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvidenceRoute = EvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MethodRoute = MethodRouteImport.update({
+  id: '/method',
+  path: '/method',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitorRoute = MonitorRouteImport.update({
+  id: '/monitor',
+  path: '/monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NetworkRoute = NetworkRouteImport.update({
+  id: '/network',
+  path: '/network',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreFlightRoute = PreFlightRouteImport.update({
+  id: '/pre-flight',
+  path: '/pre-flight',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductRoute = ProductRouteImport.update({
+  id: '/product',
+  path: '/product',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
+  '/demo': typeof DemoRoute
+  '/evidence': typeof EvidenceRoute
+  '/method': typeof MethodRoute
+  '/monitor': typeof MonitorRoute
+  '/network': typeof NetworkRoute
+  '/pre-flight': typeof PreFlightRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/terms': typeof TermsRoute
+  '/trust': typeof TrustRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
+  '/demo': typeof DemoRoute
+  '/evidence': typeof EvidenceRoute
+  '/method': typeof MethodRoute
+  '/monitor': typeof MonitorRoute
+  '/network': typeof NetworkRoute
+  '/pre-flight': typeof PreFlightRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/terms': typeof TermsRoute
+  '/trust': typeof TrustRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
+  '/demo': typeof DemoRoute
+  '/evidence': typeof EvidenceRoute
+  '/method': typeof MethodRoute
+  '/monitor': typeof MonitorRoute
+  '/network': typeof NetworkRoute
+  '/pre-flight': typeof PreFlightRoute
+  '/privacy': typeof PrivacyRoute
+  '/product': typeof ProductRoute
+  '/terms': typeof TermsRoute
+  '/trust': typeof TrustRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/accessibility'
+    | '/demo'
+    | '/evidence'
+    | '/method'
+    | '/monitor'
+    | '/network'
+    | '/pre-flight'
+    | '/privacy'
+    | '/product'
+    | '/terms'
+    | '/trust'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/accessibility'
+    | '/demo'
+    | '/evidence'
+    | '/method'
+    | '/monitor'
+    | '/network'
+    | '/pre-flight'
+    | '/privacy'
+    | '/product'
+    | '/terms'
+    | '/trust'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/accessibility'
+    | '/demo'
+    | '/evidence'
+    | '/method'
+    | '/monitor'
+    | '/network'
+    | '/pre-flight'
+    | '/privacy'
+    | '/product'
+    | '/terms'
+    | '/trust'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AccessibilityRoute: typeof AccessibilityRoute
+  DemoRoute: typeof DemoRoute
+  EvidenceRoute: typeof EvidenceRoute
+  MethodRoute: typeof MethodRoute
+  MonitorRoute: typeof MonitorRoute
+  NetworkRoute: typeof NetworkRoute
+  PreFlightRoute: typeof PreFlightRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProductRoute: typeof ProductRoute
+  TermsRoute: typeof TermsRoute
+  TrustRoute: typeof TrustRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +208,107 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accessibility': {
+      id: '/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof AccessibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evidence': {
+      id: '/evidence'
+      path: '/evidence'
+      fullPath: '/evidence'
+      preLoaderRoute: typeof EvidenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/method': {
+      id: '/method'
+      path: '/method'
+      fullPath: '/method'
+      preLoaderRoute: typeof MethodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitor': {
+      id: '/monitor'
+      path: '/monitor'
+      fullPath: '/monitor'
+      preLoaderRoute: typeof MonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/network': {
+      id: '/network'
+      path: '/network'
+      fullPath: '/network'
+      preLoaderRoute: typeof NetworkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pre-flight': {
+      id: '/pre-flight'
+      path: '/pre-flight'
+      fullPath: '/pre-flight'
+      preLoaderRoute: typeof PreFlightRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product': {
+      id: '/product'
+      path: '/product'
+      fullPath: '/product'
+      preLoaderRoute: typeof ProductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AccessibilityRoute: AccessibilityRoute,
+  DemoRoute: DemoRoute,
+  EvidenceRoute: EvidenceRoute,
+  MethodRoute: MethodRoute,
+  MonitorRoute: MonitorRoute,
+  NetworkRoute: NetworkRoute,
+  PreFlightRoute: PreFlightRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProductRoute: ProductRoute,
+  TermsRoute: TermsRoute,
+  TrustRoute: TrustRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
