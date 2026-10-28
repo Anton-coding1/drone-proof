@@ -151,18 +151,6 @@ export type Database = {
         }
         Relationships: []
       }
-      zz_probe: {
-        Row: {
-          id: number | null
-        }
-        Insert: {
-          id?: number | null
-        }
-        Update: {
-          id?: number | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
