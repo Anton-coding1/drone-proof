@@ -1,7 +1,8 @@
 import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Trash2, Upload, Pencil, FileDown, Table2, ChevronDown, Loader2, AlertCircle, Satellite, PlaneLanding, ShieldAlert } from "lucide-react";
+import { Undo2, Trash2, Upload, Pencil, FileDown, Table2, ChevronDown, Loader2, AlertCircle, Satellite, PlaneLanding, ShieldAlert, Wind, Sun, Moon, Car, Building2, Radio } from "lucide-react";
+import { HIGH_RISE_MIN, ROAD_RADIUS_M, BUILDING_RADIUS_M, daylight, fetchMapFeatures, fetchWeather, roadNames, weatherReasons, type MapFeatures, type WeatherWorst } from "@/lib/conditions";
 import { ROUTE_METHOD_VERSION } from "@/lib/site";
 import { AIRSPACE_COUNTS, LONDON_RA_NOTE, OPEN_CATEGORY_MAX_M } from "@/lib/airspace";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,8 +47,11 @@ function plainSummary(r: RouteResult): string {
   const dataLimited = r.sections.some((s) => s.decision === "caution" && s.rawDecision === "go");
   if (r.hardStops.length) {
     const zones = r.airspace.filter((h) => h.level === "frz" && !h.permitted).map((h) => h.name);
-    if (zones.length) return `Don't fly this route as planned: it enters the ${zones.join(" and ")} flight restriction zone${zones.length > 1 ? "s" : ""} without permission. Get permission (see below), or re-route around the red area on the map.`;
-    return `Don't fly this route as planned: ${r.hardStops[0]!.replace(/\.$/, "").replace(/^./, (c) => c.toLowerCase())}.`;
+    const others = r.hardStops.filter((h) => !/flight restriction zone/.test(h)).map((h) => h.replace(/\.$/, "").replace(/^./, (c) => c.toLowerCase()));
+    const zoneText = zones.length ? `it enters the ${zones.join(" and ")} flight restriction zone${zones.length > 1 ? "s" : ""} without permission` : "";
+    const all = [zoneText, ...others].filter(Boolean);
+    const list = all.length > 2 ? `${all.slice(0, -1).join("; ")}; and ${all.at(-1)}` : all.join(", and ");
+    return `Don't fly this route as planned: ${list}.${zones.length ? " Get permission (see below), or re-route around the red area on the map." : ""}`;
   }
   const held = r.airspace.filter((h) => h.level === "frz" && h.permitted).map((h) => h.name);
   if (r.decision === "go") return held.length
@@ -137,8 +141,12 @@ function RouteCheck() {
   const [profile, setProfile] = useState<DroneProfile>({ ...DEFAULT_PROFILE, multiBand: true, flagsAndFailsafe: true });
   const [activeVenues, setActiveVenues] = useState<string[]>([]);
   const [spaceWeather, setSpaceWeather] = useState<SpaceWeather>("quiet");
-  const [denseHighRise, setDenseHighRise] = useState(false);
-  const [nearMajorRoads, setNearMajorRoads] = useState(false);
+  // Conditions filled in automatically; null = use the automatic value, true/false = the user's own choice.
+  const [highRiseOv, setHighRiseOv] = useState<boolean | null>(null);
+  const [roadsOv, setRoadsOv] = useState<boolean | null>(null);
+  const [weatherOv, setWeatherOv] = useState<boolean | null>(null);
+  const [maxWindMs, setMaxWindMs] = useState(10);
+  const [rainRated, setRainRated] = useState(false);
   const [areaOverride, setAreaOverride] = useState<AreaType | "auto">("auto");
   const [consequenceOverride, setConsequenceOverride] = useState<ConsequenceClass | "auto">("auto");
   const [gates, setGates] = useState<Gates>({ notamRed: false, restrictedNoPermission: false, weatherOutside: false });
@@ -191,6 +199,32 @@ function RouteCheck() {
     },
   });
 
+  // Wait until the route stops changing (e.g. while drawing) before asking outside services.
+  const routeKey = JSON.stringify(points);
+  const [settledKey, setSettledKey] = useState(routeKey);
+  useEffect(() => { const t = setTimeout(() => setSettledKey(routeKey), 800); return () => clearTimeout(t); }, [routeKey]);
+  const settled = useMemo(() => JSON.parse(settledKey) as LatLon[], [settledKey]);
+  useEffect(() => { setHighRiseOv(null); setRoadsOv(null); setWeatherOv(null); }, [settledKey]);
+
+  const wx = useQuery({
+    queryKey: ["weather", settledKey, startHour, durationMin],
+    enabled: settled.length >= 1, retry: 0, staleTime: 10 * 60000,
+    queryFn: () => fetchWeather(settled, new Date(startHour), durationMin + (start.getTime() - startHour) / 60000),
+  });
+  const osm = useQuery({
+    queryKey: ["osm", settledKey],
+    enabled: settled.length >= 2, retry: 1, staleTime: 60 * 60000,
+    queryFn: () => fetchMapFeatures(settled),
+  });
+  const sun = useMemo(() => (points.length ? daylight(start, durationMin, points[Math.floor(points.length / 2)]!) : null), [points, start, durationMin]);
+  const wxReasons = useMemo(() => (wx.data ? weatherReasons(wx.data.worst, { maxWindMs, rainRated }) : []), [wx.data, maxWindMs, rainRated]);
+  const autoRoads = osm.data ? osm.data.roads.length > 0 : null;
+  const autoHighRise = osm.data ? osm.data.tallBuildings.length >= HIGH_RISE_MIN : null;
+  const autoWeather = wx.data ? wxReasons.length > 0 : null;
+  const nearMajorRoads = roadsOv ?? autoRoads ?? false;
+  const denseHighRise = highRiseOv ?? autoHighRise ?? false;
+  const weatherOutside = weatherOv ?? autoWeather ?? false;
+
   const nearbyVenues = useMemo(
     () => LONDON_VENUES.filter((v) => points.some((p) => kmBetween(p, [v.lat, v.lon]) <= 5)),
     [points],
@@ -199,9 +233,15 @@ function RouteCheck() {
   const ctx: RouteContext = useMemo(() => ({
     start, durationMin, hexes: sky.data?.hexes ?? [], events: sky.data?.events ?? [],
     activeVenues: LONDON_VENUES.filter((v) => activeVenues.includes(v.id)),
-    spaceWeather, denseHighRise, nearMajorRoads, gates, areaOverride, consequenceOverride, lookbackDays,
-    permissions, maxHeightM, heightAuthorised,
-  }), [start, durationMin, sky.data, activeVenues, spaceWeather, denseHighRise, nearMajorRoads, gates, areaOverride, consequenceOverride, permissions, maxHeightM, heightAuthorised]);
+    spaceWeather, denseHighRise, nearMajorRoads, gates: { ...gates, weatherOutside }, areaOverride, consequenceOverride, lookbackDays,
+    permissions, maxHeightM, heightAuthorised, night: sun?.night ?? false, weatherReasons: weatherOv === null ? wxReasons : [],
+    liveSummary: [
+      wx.data ? `Weather (Open-Meteo forecast, fetched ${wx.data.fetchedAt.slice(0, 16).replace("T", " ")} UTC): wind up to ${Math.round(wx.data.worst.wind ?? 0)} m/s at 80 m, gusts ${Math.round(wx.data.worst.gust ?? 0)} m/s, rain ${(wx.data.worst.precip ?? 0).toFixed(1)} mm/h, visibility ${wx.data.worst.visibility == null ? "n/a" : Math.round(wx.data.worst.visibility) + " m"}; drone limit ${maxWindMs} m/s${rainRated ? ", rain-rated" : ""}.` : "Weather: no forecast available; operator's own assessment.",
+      sun ? `Daylight (calculated): ${sun.night ? "night for part or all of the flight" : "daylight"}; sunrise ${sun.sunrise?.toISOString().slice(11, 16) ?? "n/a"}, sunset ${sun.sunset?.toISOString().slice(11, 16) ?? "n/a"} UTC.` : "",
+      osm.data ? `Major roads within 300 m (OpenStreetMap): ${osm.data.roads.length ? roadNames(osm.data.roads, 6) : "none"}. Buildings of 10+ floors within 150 m: ${osm.data.tallBuildings.length}.` : "Roads and buildings: map lookup unavailable; operator's own assessment.",
+      ...(roadsOv !== null || highRiseOv !== null || weatherOv !== null ? ["The operator changed at least one automatic condition."] : []),
+    ].filter(Boolean),
+  }), [wx.data, osm.data, maxWindMs, rainRated, roadsOv, highRiseOv, start, durationMin, sky.data, activeVenues, spaceWeather, denseHighRise, nearMajorRoads, gates, weatherOutside, areaOverride, consequenceOverride, permissions, maxHeightM, heightAuthorised, sun, weatherOv, wxReasons]);
   const togglePermission = (id: string) => setPermissions((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const result = useMemo(() => (points.length >= 2 && sky.data ? assessRoute(points, sectionKm, ctx, profile) : null), [points, sectionKm, ctx, profile, sky.data]);
@@ -254,6 +294,8 @@ function RouteCheck() {
               <RouteMap
                 points={points} result={result} venues={nearbyVenues} activeVenueIds={activeVenues}
                 selected={selected} onSelect={setSelected} drawing={drawing} fitToken={fitToken}
+                roads={osm.data?.roads ?? []} tallBuildings={osm.data?.tallBuildings ?? []}
+                liveChip={liveChip(wx.data?.worst ?? null, sun?.night ?? null, kp.data?.maxKp ?? null, osm.data ?? null)}
                 onAdd={(p) => { setPoints((ps) => [...ps, p]); setSelected(null); setRouteName((n) => (n.startsWith("Custom") ? n : "Custom route")); }}
               />
             </Suspense>
@@ -275,13 +317,15 @@ function RouteCheck() {
             </div>
           </div>
           {result && (
-            <div className="pointer-events-none absolute bottom-8 left-3 z-[500] rounded-lg border bg-background/90 px-3 py-2 text-xs backdrop-blur">
+            <div className="pointer-events-none absolute bottom-8 left-3 z-[500] max-w-[calc(100%-4.75rem)] rounded-lg border bg-background/90 px-3 py-2 text-xs backdrop-blur">
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="flex items-center gap-1.5"><span className="h-1.5 w-5 rounded bg-good" /> GO</span>
                 <span className="flex items-center gap-1.5"><span className="h-1.5 w-5 rounded bg-warn" /> CAUTION</span>
                 <span className="flex items-center gap-1.5"><span className="h-1.5 w-5 rounded bg-bad" /> NO-GO</span>
                 <span className="text-subtle">dashed = low confidence</span>
                 <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-bad/70 bg-bad/20" /> airport no-fly zone</span>
+                <span className="flex items-center gap-1.5"><span className="h-1 w-5 rounded bg-[#8FA8FF]" /> major road (live)</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#D9DCE3]" /> tall building (live)</span>
               </p>
             </div>
           )}
@@ -342,6 +386,13 @@ function RouteCheck() {
               </>
             )}
           </section>
+
+          {points.length >= 2 && (
+            <LiveConditions
+              wx={wx} wxReasons={wxReasons} weatherOv={weatherOv} sun={sun} start={start} kp={kp.data?.maxKp ?? null} kpLoading={kp.isLoading}
+              osm={osm} result={result} maxWindMs={maxWindMs}
+            />
+          )}
 
           {/* Sections */}
           {result && (
@@ -446,6 +497,12 @@ function RouteCheck() {
                 </Field>
               </div>
               <p className="mt-2 text-xs text-subtle">PX4: EKF2_NOAID_TOUT · ArduPilot: FS_DR_TIMEOUT.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Field label="Highest wind the drone can handle (m/s)">
+                  <input type="number" min={1} max={40} value={maxWindMs} onChange={(e) => setMaxWindMs(Math.max(1, Math.min(40, Number(e.target.value) || 1)))} className={inputCls} />
+                </Field>
+                <div className="flex items-end"><Check checked={rainRated} onChange={() => setRainRated((v) => !v)} label="Rated for rain (IP43 or better)" /></div>
+              </div>
             </Fieldset>
 
             <Fieldset title="4 · Conditions">
@@ -483,8 +540,10 @@ function RouteCheck() {
                 </Field>
               </div>
               <div className="mt-3 space-y-2">
-                <Check checked={denseHighRise} onChange={() => setDenseHighRise((v) => !v)} label="Dense high-rise along the route (poor satellite view)" />
-                <Check checked={nearMajorRoads} onChange={() => setNearMajorRoads((v) => !v)} label="Route follows or crosses major roads (in-car jammers)" hint="×1.5" />
+                <Check checked={denseHighRise} onChange={() => setHighRiseOv(!denseHighRise)} label="Dense high-rise along the route (poor satellite view)"
+                  note={autoNote(highRiseOv, autoHighRise, osm.isLoading, osm.data ? `${osm.data.tallBuildings.length} buildings of 10+ floors within ${BUILDING_RADIUS_M} m (OpenStreetMap)` : "")} />
+                <Check checked={nearMajorRoads} onChange={() => setRoadsOv(!nearMajorRoads)} label="Route follows or crosses major roads (in-car jammers)" hint="×1.5"
+                  note={autoNote(roadsOv, autoRoads, osm.isLoading, osm.data ? (osm.data.roads.length ? `${roadNames(osm.data.roads)} within ${ROAD_RADIUS_M} m (OpenStreetMap)` : `No motorway or trunk road within ${ROAD_RADIUS_M} m (OpenStreetMap)`) : "")} />
               </div>
             </Fieldset>
 
@@ -493,7 +552,8 @@ function RouteCheck() {
               <div className="space-y-2">
                 <Check checked={gates.notamRed} onChange={() => setGates((g) => ({ ...g, notamRed: !g.notamRed }))} label="Route is inside a notified GNSS-interference area (NOTAM or red AIC area)" />
                 <Check checked={gates.restrictedNoPermission} onChange={() => setGates((g) => ({ ...g, restrictedNoPermission: !g.restrictedNoPermission }))} label="Route enters other restricted airspace without permission (prison, danger area, temporary restriction or NOTAM)" />
-                <Check checked={gates.weatherOutside} onChange={() => setGates((g) => ({ ...g, weatherOutside: !g.weatherOutside }))} label="Weather is outside the drone's limits" />
+                <Check checked={weatherOutside} onChange={() => setWeatherOv(!weatherOutside)} label="Weather is outside the drone's limits"
+                  note={autoNote(weatherOv, autoWeather, wx.isLoading, wx.data ? (wxReasons.length ? wxReasons.join(" ") : "Forecast is within your drone's limits (Open-Meteo)") : wx.error ? "Forecast unavailable: tick this yourself if needed" : "")} />
               </div>
             </Fieldset>
 
@@ -504,6 +564,92 @@ function RouteCheck() {
         </div>
       </div>
     </Page>
+  );
+}
+
+/** The small text under an automatic tick box. */
+function autoNote(ov: boolean | null, auto: boolean | null, loading: boolean, detail: string): string {
+  if (loading) return "Checking automatically…";
+  if (auto === null) return detail || "Couldn't check automatically: set it yourself";
+  if (ov !== null && ov !== auto) return `Your choice (automatic check said ${auto ? "yes" : "no"}): ${detail}`;
+  return `Automatic: ${detail}`;
+}
+
+function liveChip(w: WeatherWorst | null, night: boolean | null, kp: number | null, osm: MapFeatures | null): string[] {
+  const out: string[] = [];
+  if (w) out.push(`Wind ${Math.round(Math.max(w.wind ?? 0, w.gust ?? 0))} m/s`, (w.precip ?? 0) >= 0.5 ? `Rain ${(w.precip ?? 0).toFixed(1)} mm/h` : "Dry");
+  if (night !== null) out.push(night ? "Night" : "Daylight");
+  if (kp !== null) out.push(`Kp ${kp.toFixed(1)}`);
+  if (osm) out.push(`${osm.roads.length ? roadNames(osm.roads, 2) : "No major roads"}`);
+  return out;
+}
+
+const hhmm = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString().slice(11, 16) : "–");
+
+type Q<T> = { data?: T | undefined; isLoading: boolean; error: unknown };
+function LiveConditions({ wx, wxReasons, weatherOv, sun, start, kp, kpLoading, osm, result, maxWindMs }: {
+  wx: Q<{ worst: WeatherWorst; fetchedAt: string }>; wxReasons: string[]; weatherOv: boolean | null; sun: ReturnType<typeof daylight> | null; start: Date;
+  kp: number | null; kpLoading: boolean; osm: Q<MapFeatures>; result: RouteResult | null; maxWindMs: number;
+}) {
+  type Row = { icon: typeof Wind; label: string; value: string; status: "ok" | "warn" | "bad" | "wait" | "na"; source: string };
+  const w = wx.data?.worst;
+  const rows: Row[] = [
+    {
+      icon: Wind, label: "Weather",
+      value: wx.isLoading ? "Fetching the forecast…" : w
+        ? `Wind up to ${Math.round(w.wind ?? 0)} m/s at 80 m, gusts ${Math.round(w.gust ?? 0)} m/s · ${(w.precip ?? 0) >= 0.1 ? `rain ${(w.precip ?? 0).toFixed(1)} mm/h` : "dry"} · visibility ${w.visibility == null ? "–" : `${(w.visibility / 1000).toFixed(w.visibility < 10000 ? 1 : 0)} km`} · ${w.tempMin == null ? "–" : `${Math.round(w.tempMin)} °C`}${wxReasons.length ? `. ${wxReasons.join(" ")}` : `. Within your drone's ${maxWindMs} m/s limit.`}`
+        : "No forecast for this time (forecasts cover about the next two weeks).",
+      status: wx.isLoading ? "wait" : w ? (wxReasons.length ? (weatherOv === false ? "warn" : "bad") : "ok") : "na",
+      source: w ? `Open-Meteo forecast, fetched ${hhmm(wx.data!.fetchedAt)} UTC` : "Open-Meteo",
+    },
+    {
+      icon: sun?.night ? Moon : Sun, label: "Daylight",
+      value: sun ? `${sun.night ? "Night for part or all of the flight" : "Daylight for the whole flight"} · sunrise ${hhmm(sun.sunrise)}, sunset ${hhmm(sun.sunset)} UTC` : "–",
+      status: sun ? (sun.night ? "warn" : "ok") : "na", source: "Calculated from the sun's position",
+    },
+    {
+      icon: Satellite, label: "Space weather",
+      value: kpLoading ? "Checking…" : kp !== null ? `Max Kp ${kp.toFixed(1)} in the next 24 h${kp >= 7 ? " (storm)" : " (quiet)"}` : "Unavailable: set it below",
+      status: kpLoading ? "wait" : kp === null ? "na" : kp >= 7 ? "bad" : "ok", source: "NOAA Space Weather Prediction Center",
+    },
+    {
+      icon: Car, label: "Major roads",
+      value: osm.isLoading ? "Looking up the map…" : osm.data ? (osm.data.roads.length ? `${roadNames(osm.data.roads)} within ${ROAD_RADIUS_M} m (in-car jammers are most common on major roads)` : `No motorway or trunk road within ${ROAD_RADIUS_M} m`) : "Map lookup unavailable: set it below",
+      status: osm.isLoading ? "wait" : osm.data ? (osm.data.roads.length ? "warn" : "ok") : "na", source: "OpenStreetMap",
+    },
+    {
+      icon: Building2, label: "Tall buildings",
+      value: osm.isLoading ? "Looking up the map…" : osm.data ? `${osm.data.tallBuildings.length} building${osm.data.tallBuildings.length === 1 ? "" : "s"} of 10+ floors within ${BUILDING_RADIUS_M} m${osm.data.tallBuildings.length >= HIGH_RISE_MIN ? ": poor satellite view likely" : ""}` : "Map lookup unavailable: set it below",
+      status: osm.isLoading ? "wait" : osm.data ? (osm.data.tallBuildings.length >= HIGH_RISE_MIN ? "warn" : "ok") : "na", source: "OpenStreetMap building heights (patchy outside cities)",
+    },
+    {
+      icon: Radio, label: "Airspace",
+      value: result ? (result.airspace.length ? result.airspace.map((h) => `${h.name} ${h.level === "frz" ? "no-fly zone" : "airfield"}${h.permitted ? " (permission ticked)" : ""}`).join(", ") : "No airport no-fly zones on the route") : "–",
+      status: result ? (result.airspace.some((h) => h.level === "frz" && !h.permitted) ? "bad" : result.airspace.length ? "warn" : "ok") : "na",
+      source: "UK aerodrome rules and CAA lists",
+    },
+  ];
+  const dot = { ok: "bg-good", warn: "bg-warn", bad: "bg-bad", wait: "bg-subtle animate-pulse", na: "bg-subtle/50" } as const;
+  return (
+    <section className="border-b px-6 py-6 sm:px-8" aria-labelledby="live-h">
+      <h2 id="live-h" className="flex items-center gap-2 text-lg">
+        <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-good opacity-60 motion-reduce:hidden" /><span className="relative inline-flex h-2 w-2 rounded-full bg-good" /></span>
+        Live conditions
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">Filled in automatically for this route and a start time of {start.toISOString().replace("T", " ").slice(0, 16)} UTC. You can change any of them in the settings below.</p>
+      <ul className="mt-4 divide-y rounded-lg border">
+        {rows.map((r) => (
+          <li key={r.label} className="flex gap-3 px-3 py-3 text-sm">
+            <r.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-2"><span className="font-medium">{r.label}</span><span className={`h-2 w-2 rounded-full ${dot[r.status]}`} aria-hidden="true" /><span className="sr-only">({r.status === "ok" ? "fine" : r.status === "warn" ? "worth noting" : r.status === "bad" ? "a problem" : r.status === "wait" ? "loading" : "not available"})</span></p>
+              <p className="mt-0.5 text-muted-foreground">{r.value}</p>
+              <p className="mt-0.5 text-xs text-subtle">{r.source}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -564,11 +710,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Check({ checked, onChange, label, hint }: { checked: boolean; onChange: () => void; label: string; hint?: string }) {
+function Check({ checked, onChange, label, hint, note }: { checked: boolean; onChange: () => void; label: string; hint?: string; note?: string }) {
   return (
     <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-1 py-1.5 text-sm hover:bg-foreground/[0.03]">
       <input type="checkbox" checked={checked} onChange={onChange} className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary)]" />
-      <span className="flex-1">{label}</span>
+      <span className="flex-1">{label}{note && <span className="mt-0.5 block text-xs text-subtle">{note}</span>}</span>
       {hint && <span className="font-mono text-xs text-subtle">{hint}</span>}
     </label>
   );

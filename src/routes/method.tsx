@@ -4,6 +4,7 @@ import { Container, PageIntro, Prose } from "@/components/wm/ui";
 import { THRESHOLDS as EV, VERDICTS, type VerdictKey } from "@/lib/evidence";
 import { CELL_KM, PRIOR, THRESHOLDS as RT, VULNERABILITY, type ConsequenceClass, type VulnKey } from "@/lib/routeRisk";
 import { AIRSPACE_COUNTS } from "@/lib/airspace";
+import { BUILDING_RADIUS_M, HIGH_RISE_MIN, ROAD_RADIUS_M } from "@/lib/conditions";
 import { METHOD_VERSION, ROUTE_METHOD_VERSION } from "@/lib/site";
 import { seo } from "@/lib/seo";
 
@@ -76,7 +77,7 @@ function Method() {
           <h2 id="pre-flight">Pre-flight decision method {ROUTE_METHOD_VERSION}</h2>
           <p>Each route is cut into sections (250 m to 2 km). For every section the check estimates the chance of losing trustworthy navigation and compares it with a threshold set by what is on the ground. The worst section decides the route.</p>
           <h3>Step 0: hard stops</h3>
-          <p>An aerodrome flight restriction zone without permission (checked automatically, below), a height above 120 m without an authorisation, a notified GNSS-interference area (NOTAM or red AIC area), other restricted airspace without permission, or weather outside the drone's limits makes the route NO-GO. The operator declares the last three; automatic NOTAM import is planned.</p>
+          <p>An aerodrome flight restriction zone without permission (checked automatically, below), a height above 120 m without an authorisation, weather outside the drone's limits (from the forecast, below), a notified GNSS-interference area (NOTAM or red AIC area) or other restricted airspace without permission makes the route NO-GO. The operator declares the last two; automatic NOTAM import is planned.</p>
           <h3>Airspace (checked automatically)</h3>
           <p>Every section is checked against the flight restriction zone (FRZ) of each protected UK aerodrome: the {AIRSPACE_COUNTS.protected} CAA certificated, CAA licensed and military aerodromes. Under the Air Navigation Order 2016 (articles 94A and 94B) an FRZ runs from the surface to 2,000 ft and is made of:</p>
           <ul>
@@ -86,6 +87,15 @@ function Method() {
             <li>for aerodromes without runway data or a traffic zone: a 2 NM circle.</li>
           </ul>
           <p>A section inside an FRZ is NO-GO until the operator confirms they have permission from that aerodrome's air traffic control (for Heathrow, an Off Airfield Drone Permit through the NATS portal, at least 14 days ahead). A section within 3.7 km of any other UK airfield ({AIRSPACE_COUNTS.airfields} listed) is at least CAUTION until the operator confirms they have checked with it. Central London routes carry a note about restricted areas EG R157, R158 and R159, which need NATS approval and whose exact boundaries are not loaded yet. A planned height above 120 m is NO-GO without a CAA operational authorisation.</p>
+          <h3>Conditions filled in automatically</h3>
+          <ul>
+            <li><strong>Weather</strong>: the Open-Meteo forecast at the start, middle and end of the route for the flight window. The route is NO-GO if the wind at 80 m or the gusts exceed the drone's stated limit, if rain of 0.5 mm/h or more is forecast and the drone isn't rain-rated, if visibility is under 1 km, or if the temperature is outside −10 to 40 °C.</li>
+            <li><strong>Major roads</strong>: any motorway or trunk road within {ROAD_RADIUS_M} m of the route, from OpenStreetMap, counts as "near major roads".</li>
+            <li><strong>Tall buildings</strong>: {HIGH_RISE_MIN} or more buildings of 10+ floors (or 35 m+) within {BUILDING_RADIUS_M} m, from OpenStreetMap, counts as dense high-rise. Building heights are patchy outside big cities.</li>
+            <li><strong>Daylight</strong>: calculated from the sun's position. UK legal night runs from 30 minutes after sunset to 30 minutes before sunrise; at night the "pilot flying by eye" mitigation is not credited.</li>
+            <li><strong>Space weather</strong>: NOAA's planetary K-index forecast for the next 24 hours.</li>
+          </ul>
+          <p>Each automatic value is shown with its source and time, and the operator can override any of them; overrides are recorded in the report.</p>
           <h3>Step 1: chance of interference</h3>
           <p>Start from a base rate for the area — {Object.entries(PRIOR).map(([k, v]) => `${k} ${v * 100}%`).join(", ")} per section-hour — then multiply the odds by each clue (likelihood ratios):</p>
           <ul>
@@ -130,6 +140,8 @@ function Method() {
             <li><strong>Venue locations</strong>: public locations of major London venues. Event calendars are not connected yet.</li>
             <li><strong>Witnessmark's own data</strong>: being collected; not yet used in any result.</li>
             <li><strong>Airspace</strong>: protected aerodromes from the CAA lists of certificated and licensed aerodromes (October 2026) plus active military airfields; runway coordinates from OurAirports (public domain); zone rules from the Air Navigation Order 2016, articles 94A and 94B. The official shapes are published by NATS (UAS restriction zones, updated every 28 days); importing them is the next step.</li>
+            <li><strong>Weather</strong>: Open-Meteo forecast API (CC BY 4.0). The free tier is for non-commercial use; a paid plan will be in place before the service is sold.</li>
+            <li><strong>Roads and buildings</strong>: © OpenStreetMap contributors (ODbL), queried live through the Overpass API.</li>
             <li><strong>Maps</strong>: © OpenStreetMap contributors (ODbL).</li>
           </ul>
 
@@ -150,7 +162,7 @@ function Method() {
           <ul>
             <li><strong>Site</strong> (Oct 2026): aircraft data can now be imported from our data collector; sparse but clean aircraft data no longer counts against a route.</li>
             <li><strong>Evidence v0.4</strong> (Oct 2026): aircraft readings must be within {EV.skyHexMaxKm} km of the flight; an overlapping reported event counts even when few aircraft were overhead; Low confidence defined for sparse logs; checks renamed E1–E3 and S1–S2; reviewer sign-off and hash-chained audit trail added.</li>
-            <li><strong>Pre-flight v0.3</strong> (Oct 2026): automatic airspace check (aerodrome flight restriction zones, other airfields, 120 m height limit) with permission confirmation; the route total now combines sections in {CELL_KM} km cells, so it no longer changes with the section length; the summary names any hard stop; clean aircraft data (no degraded reports) can no longer count as a warning sign.</li>
+            <li><strong>Pre-flight v0.3</strong> (Oct 2026): automatic airspace check (aerodrome flight restriction zones, other airfields, 120 m height limit) with permission confirmation; weather, major roads, tall buildings and daylight filled in automatically (all can be overridden); the route total now combines sections in {CELL_KM} km cells, so it no longer changes with the section length; the summary names any hard stop; clean aircraft data (no degraded reports) can no longer count as a warning sign.</li>
             <li><strong>Pre-flight v0.2</strong> (Oct 2026): first published version — probability × vulnerability × consequence, hard stops, confidence rules.</li>
             <li><strong>Evidence v0.3</strong>: confidence levels defined; neutral wording; limitations published.</li>
             <li><strong>Evidence v0.2</strong>: aircraft evidence and the 2×2 finding table added.</li>

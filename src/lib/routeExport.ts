@@ -17,7 +17,7 @@ export function assessmentRecord(name: string, points: LatLon[], ctx: RouteConte
       active_venues: ctx.activeVenues.map((v) => v.name), space_weather: ctx.spaceWeather,
       dense_high_rise: ctx.denseHighRise, near_major_roads: ctx.nearMajorRoads, gates: ctx.gates,
       area_override: ctx.areaOverride, consequence_override: ctx.consequenceOverride,
-      permissions_held: ctx.permissions ?? [], max_height_m: ctx.maxHeightM ?? 120, height_authorised: !!ctx.heightAuthorised,
+      night: !!ctx.night, live_conditions: ctx.liveSummary ?? [], permissions_held: ctx.permissions ?? [], max_height_m: ctx.maxHeightM ?? 120, height_authorised: !!ctx.heightAuthorised,
     },
     airspace: r.airspace.map((h) => ({ id: h.id, name: h.name, level: h.level, parts: h.parts, sections: h.sections.map((i) => i + 1), permission_held: h.permitted })),
     result: {
@@ -80,6 +80,8 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
   line(`OVERALL: ${DEC[r.decision]}  ·  ${r.confidence} confidence  ·  Chance of navigation loss along the route ~${pct(r.pRoute)}`, 12, true, r.decision === "go" ? [30, 110, 70] : r.decision === "caution" ? [150, 100, 0] : [170, 40, 35], 6);
   if (r.conditions.length) { heading("Conditions"); r.conditions.forEach((c) => line(`- ${c}`)); }
 
+  if (ctx.liveSummary?.length) { heading("Conditions found automatically"); ctx.liveSummary.forEach((t) => line(`- ${t}`, 9)); }
+
   heading("Airspace");
   if (r.hardStops.length) r.hardStops.forEach((h) => line(`- HARD STOP: ${h}`, 9.5, false, [170, 40, 35]));
   if (r.airspace.length) r.airspace.forEach((h) => line(`- ${h.name} (${h.kindLabel}): ${h.parts.join(", ")}. ${h.permitted ? "Operator states permission is held." : h.permission}`, 9));
@@ -110,6 +112,7 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
   [
     `Aircraft data: Stanford GPS Laboratory (rfi.stanford.edu), CC BY-NC 4.0. Newest reading used: ${r.dataAsOf ? r.dataAsOf.replace("T", " ").slice(0, 16) + " UTC" : "none available"}.`,
     "Airspace: aerodrome zones are built from ANO 2016 arts 94A/94B and public runway coordinates (OurAirports); they approximate the official NATS shapes.",
+    "Weather: Open-Meteo forecast (CC BY 4.0). Roads and buildings: OpenStreetMap (ODbL). Daylight is calculated from the sun's position.",
     "Event calendars are not connected; venue events are as declared by the operator.",
     "Population (ground consequence) uses a coarse London distance model unless overridden; replace with ONS/UKCEH census grids before operational use.",
     "Aircraft observe GPS quality at altitude and can miss low-power ground-level jammers. Witnessmark's own interference data is still being collected.",

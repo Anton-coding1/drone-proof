@@ -74,6 +74,12 @@ export type RouteContext = {
   /** Highest planned height above ground, metres. Above 120 m needs a CAA operational authorisation. */
   maxHeightM?: number;
   heightAuthorised?: boolean;
+  /** Any part of the flight in UK legal night (filled in automatically from the sun's position). */
+  night?: boolean;
+  /** Why the weather is outside the drone's limits (filled in automatically from the forecast). */
+  weatherReasons?: string[];
+  /** What the automatic checks found, with sources, for the report. */
+  liveSummary?: string[];
 };
 
 export type Driver = { label: string; factor: number };
@@ -313,7 +319,10 @@ export function assessSection(mid: LatLon, ctx: RouteContext, v: number, seg?: [
   }
   if (ctx.gates.notamRed) gateReasons.push("Inside a notified GNSS-interference area (NOTAM / red AIC area).");
   if (ctx.gates.restrictedNoPermission) gateReasons.push("You marked other restricted airspace (not on the map) without permission.");
-  if (ctx.gates.weatherOutside) gateReasons.push("Weather outside the drone's limits.");
+  if (ctx.gates.weatherOutside) {
+    if (ctx.weatherReasons?.length) gateReasons.push(...ctx.weatherReasons);
+    else gateReasons.push("Weather outside the drone's limits.");
+  }
   if ((ctx.maxHeightM ?? 0) > OPEN_CATEGORY_MAX_M && !ctx.heightAuthorised) gateReasons.push(`Planned height ${ctx.maxHeightM} m is above the ${OPEN_CATEGORY_MAX_M} m limit without a CAA operational authorisation.`);
   if (gateReasons.length) decision = "nogo";
   else {
@@ -343,7 +352,8 @@ export const CELL_KM = 2;
 export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteContext, profile: DroneProfile): RouteResult | null {
   const parts = splitRoute(points, sectionKm);
   if (!parts.length) return null;
-  const { v, factors } = vulnerability(profile);
+  // In the dark a pilot can't reliably fly by eye, so that mitigation isn't credited at night.
+  const { v, factors } = vulnerability(ctx.night && profile.vlosPilot ? { ...profile, vlosPilot: false } : profile);
   const sections: SectionResult[] = parts.map((p, index) => {
     const mid: LatLon = [(p.start[0] + p.end[0]) / 2, (p.start[1] + p.end[1]) / 2];
     return { index, start: p.start, end: p.end, mid, lengthKm: p.lengthKm, ...assessSection(mid, ctx, v, [p.start, p.end]) };
@@ -389,6 +399,7 @@ export function assessRoute(points: LatLon[], sectionKm: number, ctx: RouteConte
 
   const conditions: string[] = [];
   for (const h of airspace) if (h.permitted) conditions.push(h.level === "frz" ? `Carry and follow your ${h.name} permission (and any ATC instructions).` : `Follow what ${h.name} airfield agreed with you.`);
+  if (ctx.night) conditions.push("Night flight (from 30 minutes after sunset to 30 minutes before sunrise): make sure your drone's lights meet the CAA rules. Flying by eye without GPS isn't credited in the dark.");
   if (londonRestricted) conditions.push("Confirm the route is outside R157, R158 and R159, or that you hold NATS approval for them.");
   if (decision !== "go") {
     if (!profile.vlosPilot) conditions.push("Keep the drone within visual line of sight with a pilot ready to fly without GNSS.");

@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Polyline, Polygon, Circle, CircleMarker, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import { zoneShapes } from "@/lib/airspace";
+import type { Road } from "@/lib/conditions";
 import type { LatLon, RouteResult, Venue } from "@/lib/routeRisk";
 
 const COLORS = { go: "#4FB286", caution: "#E0A84A", nogo: "#E5574F" } as const;
@@ -66,12 +67,14 @@ function FitTo({ points, token }: { points: LatLon[]; token: number }) {
 }
 
 export default function RouteMap({
-  points, result, venues, activeVenueIds, selected, onSelect, onAdd, drawing, fitToken,
+  points, result, venues, activeVenueIds, selected, onSelect, onAdd, drawing, fitToken, roads = [], tallBuildings = [], liveChip = [],
 }: {
   points: LatLon[]; result: RouteResult | null; venues: Venue[]; activeVenueIds: string[];
   selected: number | null; onSelect: (i: number) => void; onAdd: (p: LatLon) => void; drawing: boolean; fitToken: number;
+  roads?: Road[]; tallBuildings?: LatLon[]; liveChip?: string[];
 }) {
   return (
+    <div className="relative h-full w-full">
     <MapContainer
       center={[51.5074, -0.1278]}
       zoom={12}
@@ -92,6 +95,17 @@ export default function RouteMap({
       <SizeWatcher />
       <FitTo points={points} token={fitToken} />
       <AirspaceLayer points={points} />
+
+      {roads.map((r) => (
+        <Polyline key={`road-${r.id}`} positions={r.line} pathOptions={{ color: "#8FA8FF", weight: 3, opacity: 0.75 }}>
+          <Tooltip className="wm-tip" sticky>{r.name} ({r.kind}) · live from OpenStreetMap · in-car jammers are most common on major roads</Tooltip>
+        </Polyline>
+      ))}
+      {tallBuildings.map((b, i) => (
+        <CircleMarker key={`bld-${i}`} center={b} radius={3} pathOptions={{ color: "#D9DCE3", weight: 1, fillColor: "#D9DCE3", fillOpacity: 0.8 }}>
+          <Tooltip className="wm-tip" direction="top">Building of 10+ floors · live from OpenStreetMap</Tooltip>
+        </CircleMarker>
+      ))}
 
       {venues.map((v) => {
         const on = activeVenueIds.includes(v.id);
@@ -129,5 +143,12 @@ export default function RouteMap({
         </CircleMarker>
       ))}
     </MapContainer>
+    {liveChip.length > 0 && (
+      <div className="pointer-events-none absolute right-3 top-16 z-[500] max-w-[calc(100%-1.5rem)] sm:top-3 sm:max-w-[60%] rounded-lg border bg-background/90 px-3 py-1.5 text-xs backdrop-blur">
+        <span className="mr-2 inline-flex items-center gap-1 font-medium text-good"><span className="h-1.5 w-1.5 rounded-full bg-good" />LIVE</span>
+        <span className="text-muted-foreground">{liveChip.join(" · ")}</span>
+      </div>
+    )}
+    </div>
   );
 }
