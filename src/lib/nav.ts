@@ -1,4 +1,4 @@
-import { FileSearch, RadioTower, Siren, LayoutGrid, MousePointerClick, Route as RouteIcon, ShieldCheck, BookOpen, Lock, FileText, type LucideIcon } from "lucide-react";
+import { FileSearch, LayoutGrid, MousePointerClick, Route as RouteIcon, ShieldCheck, BookOpen, Lock, FileText, type LucideIcon } from "lucide-react";
 import { PHOTOS, type Photo } from "@/lib/photos";
 
 export type NavLink = { label: string; to: string; hash?: string };
@@ -12,8 +12,6 @@ export const MENUS: Menu[] = [
       { label: "Overview", desc: "One product for GPS interference, and how its parts fit together.", icon: LayoutGrid, to: "/product" },
       { label: "Pre-flight check", desc: "GO / CAUTION / NO-GO for GPS interference along a planned route.", icon: RouteIcon, to: "/pre-flight" },
       { label: "Incident evidence", desc: "Independent, tamper-evident evidence for drone claims.", icon: FileSearch, to: "/evidence" },
-      { label: "Site monitoring", desc: "Upload a sensor log and see the jamming and spoofing it caught.", icon: Siren, to: "/monitor" },
-      { label: "Ground sensors", desc: "Rooftop receivers that hear the jammers aircraft miss.", icon: RadioTower, to: "/network" },
       { label: "Try it with your data", desc: "Every feature, with your own files or the samples provided.", icon: MousePointerClick, to: "/demo" },
     ],
     feature: { photo: PHOTOS.airportNight, title: "One product, one record", text: "Every feature draws on the same independent record of interference, and shows its reasons, confidence and limits.", link: { label: "See how it fits together", to: "/product" } },
@@ -35,7 +33,7 @@ export const MENUS: Menu[] = [
 export const NAV_LINKS: NavLink[] = [{ label: "Method", to: "/method" }, { label: "About", to: "/about" }];
 
 /** The product's features (used by search). */
-export const FEATURES_NAV = MENUS[0]!.items.slice(0, 5);
+export const FEATURES_NAV = MENUS[0]!.items.slice(0, 3);
 
 export const FOOTER: { label: string; links: NavLink[] }[] = [
   { label: "Product", links: [
@@ -44,9 +42,7 @@ export const FOOTER: { label: string; links: NavLink[] }[] = [
     { label: "Check a route", to: "/pre-flight/check" },
     { label: "Incident evidence", to: "/evidence" },
     { label: "Analyse a flight log", to: "/evidence", hash: "upload" },
-    { label: "Site monitoring", to: "/monitor" },
     { label: "Try it with your data", to: "/demo" },
-    { label: "Ground sensors", to: "/network" },
   ] },
   { label: "Method", links: [
     { label: "How it works", to: "/method" },

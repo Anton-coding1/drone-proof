@@ -24,7 +24,7 @@ function Trust() {
           </ul>
 
           <h2>Tamper evidence</h2>
-          <p>When a flight log is uploaded, our server computes a SHA-256 fingerprint from the exact bytes it received and stores it with the case. The browser never supplies the fingerprint, so it can't be forged. Anyone holding a copy of the file can check it against the case: a single changed value produces a completely different fingerprint. The fingerprint shows the file hasn't changed since upload; it can't show the log was accurate when it was recorded.</p>
+          <p>When a flight log is uploaded, our server computes a SHA-256 fingerprint from the exact bytes it received and stores it with the case. The browser never supplies the fingerprint, so it can't be forged. Anyone holding a copy of the file can check it against the case: a single changed value produces a completely different fingerprint. The fingerprint shows the file hasn't changed since upload; it can't show the log was accurate when it was recorded. Excel files are read into rows in your browser before upload; the fingerprint is always of the original file you chose.</p>
           <p>Each case also keeps an audit trail in which every entry's hash covers the one before it, so editing a past entry breaks the chain visibly. In this prototype, sign-offs and the audit trail are stored in the reviewer's browser; a shared, server-side record is planned with accounts.</p>
 
           <h2 id="security">Security measures</h2>
@@ -44,9 +44,6 @@ function Trust() {
 
           <h2>What we store</h2>
           <p>For each uploaded log: the GPS readings (time, position, altitude, accuracy, satellite count and receiver flags), the file name, the upload time and the fingerprint. We don't ask for personal details; please keep them out of file names. Route checks run in your browser and are not stored by us.</p>
-
-          <h2>Ground sensors</h2>
-          <p>Our sensors only receive satellite signals, like any satnav; they never transmit. The exact position of each sensor stays on the device, because the people who host them deserve privacy. Exported events carry a site name and an area, never an address, and we don't publish sensor locations.</p>
 
           <h2>Who can see a case</h2>
           <p>Today, a case can be opened by anyone who has its link, which contains a long random identifier. Uploaded cases are not listed publicly: the site only lists demo cases plus the uploads made from your own browser. Even so, this is not yet a confidential system, so <strong>please don't upload logs that must stay private</strong>. Private workspaces with sign-in and access control will come before any production use.</p>

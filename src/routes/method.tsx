@@ -7,14 +7,13 @@ import { METHOD_VERSION, ROUTE_METHOD_VERSION } from "@/lib/site";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/method")({
-  head: () => ({ meta: seo({ title: "Method", description: "How Witnessmark works: the two-witness incident evidence method, the pre-flight decision method and the ground sensor method, with every threshold, data source and limitation.", type: "article" }) }),
+  head: () => ({ meta: seo({ title: "Method", description: "How Witnessmark works: the two-witness incident evidence method and the pre-flight decision method, with every threshold, data source and limitation.", type: "article" }) }),
   component: Method,
 });
 
 const TOC = [
   ["evidence", "Incident evidence method"],
   ["pre-flight", "Pre-flight decision method"],
-  ["sensors", "Ground sensor detection method"],
   ["sources", "Data sources"],
   ["limitations", "Limitations"],
   ["changelog", "Changelog"],
@@ -23,7 +22,7 @@ const TOC = [
 function Method() {
   return (
     <Page>
-      <PageIntro eyebrow={`Evidence ${METHOD_VERSION} · Pre-flight ${ROUTE_METHOD_VERSION} · Sensors v0.1`} title="The method, in full." lead="Every rule, threshold and limitation behind Witnessmark's results. Published so they can be checked, challenged and improved." />
+      <PageIntro eyebrow={`Evidence ${METHOD_VERSION} · Pre-flight ${ROUTE_METHOD_VERSION}`} title="The method, in full." lead="Every rule, threshold and limitation behind Witnessmark's results. Published so they can be checked, challenged and improved." />
       <Container className="grid grid-cols-1 gap-12 py-16 lg:grid-cols-[220px_minmax(0,1fr)]">
         <nav aria-label="On this page" className="lg:sticky lg:top-24 lg:self-start">
           <p className="eyebrow">On this page</p>
@@ -107,29 +106,11 @@ function Method() {
           <p>Ground consequence currently uses a coarse London distance model (or the operator's choice); census population grids are the next step. The whole route is also checked as one: the combined chance of loss across all sections is held to the strictest class on the route.</p>
           <h3>Confidence</h3>
           <ul>
-            <li><strong>High</strong>: a Witnessmark ground sensor within 1 km with 14+ days of data, plus fresh aircraft data. Not yet available: the sensor network isn't deployed.</li>
+            <li><strong>High</strong>: needs Witnessmark's own interference data near the route, which is still being collected. Not available yet.</li>
             <li><strong>Medium</strong>: 20+ aircraft reports near the section, the newest within 7 days of the flight.</li>
             <li><strong>Low</strong>: otherwise. In populated areas (C3, C4), a Low-confidence section can never be GO; it is shown as CAUTION — data-limited.</li>
           </ul>
           <p>Each result shows its top drivers, a suggested extra ground-risk buffer (2 m/s drift over the drone's holdover time) and conditions for flying under CAUTION. The PDF export carries a SHA-256 fingerprint of the full assessment.</p>
-
-          <h2 id="sensors">Ground sensor detection method v0.1</h2>
-          <p><strong>Purpose.</strong> To record GPS jamming and spoofing at street level, where aircraft can't see it, with the evidence for every event. The sensors are in development: this method has been tested on simulated data only, and no live sensor data is used anywhere on this site yet.</p>
-          <p><strong>Hardware.</strong> A receive-only multi-band GNSS receiver with a fixed antenna, logging its own health once a second. Nothing is ever transmitted.</p>
-          <p><strong>Learning the site.</strong> For the first 30 minutes the sensor only learns: the usual strength of its strongest satellites, its front-end gain and its jamming indicator, and its own surveyed position. After that, the baseline keeps rolling over the last six hours of clean data.</p>
-          <h3>Signs checked every second</h3>
-          <ul>
-            <li><strong>G1</strong> The strongest satellites above 15° all weaken together, by at least 4 dB-Hz and well beyond normal variation (jamming; an obstruction only blocks some satellites).</li>
-            <li><strong>G2</strong> The front-end gain moves at least 15% from normal (extra energy in the band).</li>
-            <li><strong>G3</strong> The receiver's jamming indicator rises by at least 15, or the receiver raises its own jamming flag.</li>
-            <li><strong>G4</strong> The position fix is lost while other signs are present.</li>
-            <li><strong>G5</strong> The fixed antenna appears to move at least 30 m (100 m counts on its own) while the receiver claims good accuracy, or the receiver raises its spoofing flag (spoofing).</li>
-            <li><strong>G6</strong> Signals become at least 4 dB-Hz stronger than normal (supports spoofing).</li>
-          </ul>
-          <p><strong>Events.</strong> An event opens when the signs add up for at least 5 seconds in a row, and closes after 30 quiet seconds or a gap in the data. A 2-second glitch or a lorry parking in front of the antenna does not count.</p>
-          <p><strong>Confidence.</strong> High with three independent kinds of sign, or two plus the receiver's own flag; Medium with two; Low otherwise.</p>
-          <p><strong>Privacy.</strong> The antenna's exact position never leaves the device. Exported events carry a site name and an area only.</p>
-          <p><strong>Validation.</strong> Every jamming exercise the CAA announces in advance is a test: we will publish matches, misses and false alarms here before relying on sensor data in any product.</p>
 
           <h2 id="sources">Data sources</h2>
           <ul>
@@ -137,13 +118,13 @@ function Method() {
             <li><strong>Space weather</strong>: NOAA Space Weather Prediction Center planetary K-index forecast.</li>
             <li><strong>Flight logs</strong>: supplied by the claimant or operator, fingerprinted on upload.</li>
             <li><strong>Venue locations</strong>: public locations of major London venues. Event calendars are not connected yet.</li>
-            <li><strong>Witnessmark ground sensors</strong>: our own receive-only receivers. In development; not yet used in any result.</li>
+            <li><strong>Witnessmark's own data</strong>: being collected; not yet used in any result.</li>
             <li><strong>Maps</strong>: © OpenStreetMap contributors (ODbL).</li>
           </ul>
 
           <h2 id="limitations">Limitations</h2>
           <ul>
-            <li>Aircraft observe GPS quality at altitude. Low-power jammers near the ground may affect a drone without reaching any aircraft. Our ground sensors are designed to close this gap but are not yet deployed.</li>
+            <li>Aircraft observe GPS quality at altitude. Low-power jammers near the ground may affect a drone without reaching any aircraft. Our own data collection is aimed at this gap.</li>
             <li>Aircraft coverage is thin in some places and hours (especially late at night), which limits the second witness and the route check's confidence.</li>
             <li>Logs without jamming or spoofing fields rely on E2 and E3 only. DJI logs need a decrypted export.</li>
             <li>A fingerprint shows a file hasn't changed since upload. It does not show the log was accurate when recorded.</li>
@@ -155,7 +136,6 @@ function Method() {
 
           <h2 id="changelog">Changelog</h2>
           <ul>
-            <li><strong>Ground sensors v0.1</strong> (Oct 2026): first published detection method (G1–G6), tested on simulated data.</li>
             <li><strong>Site</strong> (Oct 2026): aircraft data can now be imported from our data collector; sparse but clean aircraft data no longer counts against a route.</li>
             <li><strong>Evidence v0.4</strong> (Oct 2026): aircraft readings must be within {EV.skyHexMaxKm} km of the flight; an overlapping reported event counts even when few aircraft were overhead; Low confidence defined for sparse logs; checks renamed E1–E3 and S1–S2; reviewer sign-off and hash-chained audit trail added.</li>
             <li><strong>Pre-flight v0.2</strong> (Oct 2026): first published version — probability × vulnerability × consequence, hard stops, confidence rules.</li>

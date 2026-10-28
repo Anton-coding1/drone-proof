@@ -23,7 +23,7 @@ function Terms() {
           <h2>Your uploads</h2>
           <p>Only upload flight logs you are entitled to share. Don't upload logs that must stay confidential: cases can currently be opened by anyone who has the link. You keep ownership of your data; you allow us to process it to produce your case and, in anonymised and aggregated form, to improve the method.</p>
           <h2>Acceptable use</h2>
-          <p>Don't try to break, overload or misuse the service, and don't use it to locate or target anyone. Our ground sensors and this service are receive-only; we never transmit or jam signals.</p>
+          <p>Don't try to break, overload or misuse the service, and don't use it to locate or target anyone. This service is receive-only; we never transmit or jam signals.</p>
           <h2>Liability</h2>
           <p>To the extent the law allows, the prototype is provided "as is" without warranties, and we aren't liable for decisions made using it. Nothing in these terms limits liability that cannot be limited by law.</p>
           <h2>Contact</h2>

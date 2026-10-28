@@ -11,7 +11,7 @@ export function SiteFooter() {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" aria-label="Witnessmark home"><Wordmark className="text-lg" /></Link>
             <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
-              An independent record of GPS jamming and spoofing at street level: a decision before a drone flies, evidence after an incident.
+              Independent intelligence on GPS jamming and spoofing for drones: a decision before a drone flies, evidence after an incident.
             </p>
             <p className="mt-4 inline-flex rounded-full border px-2.5 py-1 font-mono text-[11px] text-subtle">Demo version</p>
           </div>

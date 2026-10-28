@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Route as RouteIcon, FileSearch, Siren, ArrowRight } from "lucide-react";
+import { Download, Route as RouteIcon, FileSearch, ArrowRight } from "lucide-react";
 import { Page } from "@/components/wm/Page";
 import { Container, PageIntro, btn } from "@/components/wm/ui";
-import { FLIGHT_SAMPLES, FORMATS, ROUTE_SAMPLES, SENSOR_SAMPLES, type DemoFile } from "@/lib/demoFiles";
+import { DropAnything } from "@/components/DropAnything";
+import { FLIGHT_SAMPLES, FORMATS, ROUTE_SAMPLES, type DemoFile } from "@/lib/demoFiles";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/demo")({
-  head: () => ({ meta: seo({ title: "Try it with your data", description: "Try every Witnessmark feature with your own files, or with the sample routes, flight logs and sensor logs provided." }) }),
+  head: () => ({ meta: seo({ title: "Try it with your data", description: "Try every Witnessmark feature with your own files, or with the sample routes and flight logs provided." }) }),
   component: Demo,
 });
 
@@ -30,14 +31,6 @@ const SECTIONS: {
     files: FLIGHT_SAMPLES, format: FORMATS.flight,
     note: "Each sample lands in a different box of the finding table. Uploaded logs are stored as cases you can share by link.",
   },
-  {
-    id: "sites", icon: Siren, name: "Site monitoring",
-    what: "Upload a ground sensor log and see every jamming or spoofing event it caught, with evidence and confidence.",
-    steps: ["Download a sample sensor log, or record one with the Witnessmark sensor software.", "Open site monitoring and upload it.", "Read the timeline and each event's evidence."],
-    tool: { to: "/monitor", label: "Open site monitoring" },
-    files: SENSOR_SAMPLES, format: FORMATS.sensor,
-    note: "Sensor logs are analysed in your browser and never leave your device.",
-  },
 ];
 
 function Demo() {
@@ -46,9 +39,11 @@ function Demo() {
       <PageIntro
         eyebrow="Demo"
         title="Try Witnessmark with your own data."
-        lead="Every feature accepts a file. Use your own, or download the samples below: each one is simulated and labelled with the result you should see."
+        lead="Every feature accepts a spreadsheet, CSV or Excel. Use your own, or download the samples below: each one is simulated and labelled with the result you should see."
       >
-        <ul className="mt-9 flex flex-wrap gap-3">
+        <p className="mt-4 max-w-2xl text-sm text-subtle">We're currently collecting our own interference data. Today Witnessmark uses public aircraft reports and the files you upload; the demo samples are simulated.</p>
+        <div className="mt-10 max-w-3xl"><DropAnything /></div>
+        <ul className="mt-8 flex flex-wrap gap-3">
           {SECTIONS.map((s) => (
             <li key={s.id}><a href={`#${s.id}`} className={btn.secondary}><s.icon className="h-4 w-4" aria-hidden="true" />{s.name}</a></li>
           ))}
@@ -86,16 +81,21 @@ function Demo() {
                         </td>
                         <td className="hidden px-4 py-3.5 text-muted-foreground sm:table-cell">{f.expect}</td>
                         <td className="px-4 py-3.5 text-right">
-                          <a href={`/demo-data/${f.file}`} download className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs text-foreground hover:bg-foreground/[0.05]" aria-label={`Download ${f.name} (${f.file})`}>
-                            <Download className="h-3.5 w-3.5" aria-hidden="true" /> CSV
-                          </a>
+                          <span className="inline-flex gap-1.5">
+                            <a href={`/demo-data/${f.file.replace(/\.csv$/, ".xlsx")}`} download className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs text-foreground hover:bg-foreground/[0.05]" aria-label={`Download ${f.name} as Excel`}>
+                              <Download className="h-3.5 w-3.5" aria-hidden="true" /> Excel
+                            </a>
+                            <a href={`/demo-data/${f.file}`} download className="inline-flex h-9 items-center rounded-md border px-3 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" aria-label={`Download ${f.name} as CSV`}>
+                              CSV
+                            </a>
+                          </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-xs leading-5 text-subtle"><span className="text-muted-foreground">Format:</span> {s.format}</p>
+              <p className="mt-4 text-xs leading-5 text-subtle"><span className="text-muted-foreground">Columns (CSV or Excel, first sheet):</span> {s.format}</p>
               {s.note && <p className="mt-2 text-xs leading-5 text-subtle">{s.note}</p>}
             </div>
           </Container>

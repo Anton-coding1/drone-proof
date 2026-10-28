@@ -277,11 +277,11 @@ export function assessSection(mid: LatLon, ctx: RouteContext, v: number) {
   const pNav = 1 - (1 - pInt) * (1 - pEnv);
   const pLoss = pNav * v;
 
-  // Confidence: no Witnessmark ground sensors yet, so High is not reachable.
+  // Confidence: High needs our own data near the route, which is still being collected.
   const fresh = newest !== null && startMs - newest <= 7 * 86400000;
   const confidence: Confidence = n >= 20 && fresh ? "Medium" : "Low";
   if (n >= 20 && !fresh) notes.push("Aircraft data is more than 7 days older than the planned flight.");
-  notes.push("No Witnessmark ground sensor within 1 km (network not yet deployed).");
+  notes.push("Witnessmark's own interference data isn't included yet (still being collected).");
 
   const rawDecision = decide(pLoss, consequence);
   let decision = rawDecision;

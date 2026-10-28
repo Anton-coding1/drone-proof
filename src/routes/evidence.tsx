@@ -88,10 +88,6 @@ function Evidence() {
                 <li><span className="font-mono text-foreground">S2</span> More than 20% of aircraft overhead reported degraded GPS (needs 5+ aircraft)</li>
               </ul>
             </div>
-            <div className="py-6">
-              <p className="flex items-center gap-2 font-medium text-muted-foreground"><RadioTower className="h-4 w-4" aria-hidden="true" /> Coming next · a witness at street level</p>
-              <p className="mt-3 text-sm text-muted-foreground">Witnessmark's receive-only ground sensors will add a third, independent witness near the ground, where aircraft can't hear small jammers. <Link to="/network" className="text-foreground underline underline-offset-4">How they work</Link></p>
-            </div>
           </div>
         </Container>
       </section>

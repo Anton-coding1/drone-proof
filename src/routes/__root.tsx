@@ -66,7 +66,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#08090A" },
       { name: "color-scheme", content: "dark" },
-      ...seo({ title: "Witnessmark", description: "Independent intelligence on GPS jamming and spoofing at street level: a GO / CAUTION / NO-GO check before a drone flies, tamper-evident evidence after an incident, and sensors that hear what aircraft miss." }),
+      ...seo({ title: "Witnessmark", description: "Independent intelligence on GPS jamming and spoofing for drones: a GO / CAUTION / NO-GO check before a drone flies, and tamper-evident evidence after an incident." }),
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -83,7 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "Witnessmark",
-          description: "An independent record of GPS jamming and spoofing at street level: route checks for drones, evidence after incidents and receive-only ground sensors.",
+          description: "Independent intelligence on GPS jamming and spoofing for drones: route checks before a flight and evidence after an incident.",
           areaServed: "GB",
           knowsAbout: ["GNSS interference", "GPS jamming", "GPS spoofing", "Drone operations", "Insurance claims evidence"],
         }),

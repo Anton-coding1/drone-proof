@@ -202,7 +202,7 @@ export function analyse(pts: Point[], events: SkyEvent[], hexes: SkyHex[]) {
   const change: string[] = [];
   if (sky.status === "unknown") change.push("Aircraft data for this hour and place would let the second witness confirm or rule out a wider interference area.");
   if (!drone.flagsKnown) change.push("A log that includes the receiver's jamming and spoofing fields (E1) would strengthen the drone evidence.");
-  if (drone.yes && sky.status === "no") change.push("A ground sensor or second drone log from the same area could confirm a local, low-level source.");
+  if (drone.yes && sky.status === "no") change.push("A second drone log or an independent recording from the same area could confirm a local, low-level source.");
   if (!drone.yes && sky.status !== "yes") change.push("Evidence of a control-link or hardware fault would point the claim elsewhere; this method only covers GPS.");
   if (drone.yes && sky.status === "yes") change.push("Evidence that the drone's receiver was faulty before the flight would weaken this finding.");
   if (dataPoor) change.push("A complete flight log (more points, with accuracy and satellite counts) is needed for a reliable finding.");

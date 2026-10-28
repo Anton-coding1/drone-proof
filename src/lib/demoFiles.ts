@@ -17,16 +17,8 @@ export const FLIGHT_SAMPLES: DemoFile[] = [
   { file: "flight-london-clean.csv", name: "Clean flight", note: "London", expect: "No evidence of interference: check pilot input and hardware" },
 ];
 
-export const SENSOR_SAMPLES: DemoFile[] = [
-  { file: "sensor-jamming-event.csv", name: "Jamming event", note: "A 10-minute jammer nearby", expect: "1 jamming event, High confidence" },
-  { file: "sensor-spoofing-event.csv", name: "Spoofing event", note: "Fake signals drag the position north", expect: "1 spoofing event, High confidence" },
-  { file: "sensor-jamming-then-spoofing.csv", name: "Two events", note: "Jamming, then spoofing 20 minutes later", expect: "2 events" },
-  { file: "sensor-quiet-day.csv", name: "Quiet day", note: "Normal signals", expect: "No interference found" },
-  { file: "sensor-blocked-view.csv", name: "Blocked view", note: "A lorry blocks part of the sky", expect: "No interference found (an obstruction isn't jamming)" },
-];
 
 export const FORMATS = {
   route: "lat, lon (one waypoint per row). Optional on the first row: planned_start (ISO time), event_venue (e.g. wembley).",
   flight: "t, lat, lon, alt_m, satellites, accuracy_m, fix_type, jamming_state*, spoofing_state* (one row per reading; * optional)",
-  sensor: "time, fix, num_sv, h_acc_m, cno_top, sats_tracked, agc, jam_ind, jam_state, spoof_state, lat, lon (one row per second; only time and cno_top required)",
 };

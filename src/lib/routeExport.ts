@@ -101,7 +101,7 @@ export async function downloadPdf(name: string, points: LatLon[], ctx: RouteCont
     `Aircraft data: Stanford GPS Laboratory (rfi.stanford.edu), CC BY-NC 4.0. Newest reading used: ${r.dataAsOf ? r.dataAsOf.replace("T", " ").slice(0, 16) + " UTC" : "none available"}.`,
     "Event calendars are not connected; venue events are as declared by the operator.",
     "Population (ground consequence) uses a coarse London distance model unless overridden; replace with ONS/UKCEH census grids before operational use.",
-    "Aircraft observe GPS quality at altitude and can miss low-power ground-level jammers. No Witnessmark ground sensors are deployed yet.",
+    "Aircraft observe GPS quality at altitude and can miss low-power ground-level jammers. Witnessmark's own interference data is still being collected.",
     "All weights and thresholds are provisional (Pre-flight method v0.2) and have not been validated against real flights.",
     "Decision support only. The remote pilot and operator remain responsible for the flight and for their CAA safety case.",
   ].forEach((t) => line(`- ${t}`, 8.6, false, [60, 60, 60], 4.2));

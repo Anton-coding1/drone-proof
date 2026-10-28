@@ -16,7 +16,7 @@ const INPUTS = [
   { name: "Events near the route", what: "Stadium matches, state events and large gatherings, where counter-drone jamming is most likely.", status: "You declare", note: "Venue locations built in; calendars next" },
   { name: "Space weather", what: "Geomagnetic storm forecast that can degrade GNSS for everyone.", status: "Live", note: "NOAA Space Weather Prediction Center" },
   { name: "Ground consequence", what: "How many people are under each section, which sets how cautious the thresholds are.", status: "Approximate", note: "London model now; census grids next" },
-  { name: "Witnessmark ground sensors", what: "Rooftop receivers that hear the low-power jammers aircraft miss.", status: "In development", note: "The layer that makes street-level risk visible" },
+  { name: "Our own interference data", what: "Interference data we collect ourselves, to sit alongside the public aircraft reports.", status: "In development", note: "Being collected now" },
 ];
 
 function RoutesPage() {
@@ -100,7 +100,6 @@ function RoutesPage() {
               </div>
             ))}
           </div>
-          <p className="mt-6"><Link to="/network" className={btn.text}>How the ground sensors work →</Link></p>
         </Container>
       </section>
 

@@ -2,7 +2,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
 
 /** Public pages listed in the sitemap. Case files, admin and redirects are left out on purpose. */
 export const SITEMAP_PATHS = [
-  "/", "/product", "/pre-flight", "/pre-flight/check", "/evidence", "/network", "/monitor", "/demo", "/method", "/trust", "/about", "/privacy", "/terms",
+  "/", "/product", "/pre-flight", "/pre-flight/check", "/evidence", "/demo", "/method", "/trust", "/about", "/privacy", "/terms",
 ] as const;
 
 /** Small text files served by the server entry: robots.txt, sitemap.xml and security.txt. */

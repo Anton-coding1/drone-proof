@@ -14,6 +14,8 @@ export const uploadFlightLog = createServerFn({ method: "POST" })
     z.object({
       filename: z.string().min(1).max(255),
       fileBase64: z.string().min(4).max(Math.ceil((MAX_UPLOAD_BYTES * 4) / 3) + 8).regex(/^[A-Za-z0-9+/]+=*$/),
+      // For Excel files, the table as CSV (converted in the browser). Ignored for CSV uploads.
+      csvText: z.string().max(MAX_UPLOAD_BYTES * 3).optional(),
     }).parse(d))
   .handler(async ({ data }) => {
     const { rateLimit, clientKey, cleanText, sha256Bytes } = await import("@/lib/security.server");
@@ -31,13 +33,16 @@ export const uploadFlightLog = createServerFn({ method: "POST" })
     }
     if (bytes.length > MAX_UPLOAD_BYTES) throw new Error("File too large: maximum 5 MB.");
 
-    const parsed = parseFlightCsv(new TextDecoder("utf-8").decode(bytes));
+    const excel = /\.xlsx$/i.test(data.filename);
+    if (excel && !data.csvText) throw new Error("The Excel file couldn't be read. Please try again or upload a CSV.");
+    if (!excel && !/\.csv$/i.test(data.filename)) throw new Error("Please upload a CSV or Excel (.xlsx) file.");
+    const parsed = parseFlightCsv(excel ? data.csvText! : new TextDecoder("utf-8").decode(bytes));
     if ("error" in parsed) throw new Error(parsed.error);
     if (parsed.points.length < 2) throw new Error("The file needs at least two GPS readings.");
 
     const sha256 = await sha256Bytes(bytes);
     const filename = cleanText(data.filename, 120) || "flight-log.csv";
-    const name = cleanText(filename.replace(/\.csv$/i, "").replace(/[_-]+/g, " "), 120) || "Uploaded flight";
+    const name = cleanText(filename.replace(/\.(csv|xlsx)$/i, "").replace(/[_-]+/g, " "), 120) || "Uploaded flight";
     const p0 = parsed.points[0]!;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

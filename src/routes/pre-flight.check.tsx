@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Page } from "@/components/wm/Page";
 import { ConfidenceMeter, Eyebrow, StatusPill, btn, type Status } from "@/components/wm/ui";
 import { seo } from "@/lib/seo";
+import { TABLE_ACCEPT, checkTableName, readTableFile } from "@/lib/tabular";
+import { takePendingFile } from "@/lib/pendingFile";
 import {
   AREA_LABEL, DEFAULT_PROFILE, LONDON_VENUES, THRESHOLDS, VULNERABILITY, assessRoute, kmBetween, pct,
   type AreaType, type ConsequenceClass, type DroneProfile, type Gates, type LatLon, type RouteContext, type SpaceWeather, type VulnKey,
@@ -173,15 +175,25 @@ function RouteCheck() {
     setActiveVenues(p.venue ? [p.venue] : []);
     setStartLocal(p.start ? utcToLocalInput(p.start) : nextHourLocal());
   }
-  async function onFile(f: File) {
-    setFileErr(null);
-    if (f.size > 1_000_000) return setFileErr("File too large (max 1 MB).");
-    const r = parseRouteCsv(await f.text());
+  function loadRouteText(text: string, name: string) {
+    const r = parseRouteCsv(text);
     if (typeof r === "string") return setFileErr(r);
-    setPoints(r.points); setRouteName(f.name.replace(/\.csv$/i, "")); setFitToken((t) => t + 1); setSelected(null); setDrawing(false);
+    setPoints(r.points); setRouteName(name.replace(/\.(csv|xlsx)$/i, "")); setFitToken((t) => t + 1); setSelected(null); setDrawing(false);
     if (r.start) setStartLocal(utcToLocalInput(r.start));
     setActiveVenues(r.venue ? [r.venue] : []);
   }
+  async function onFile(f: File) {
+    setFileErr(null);
+    const bad = checkTableName(f.name);
+    if (bad) return setFileErr(bad);
+    if (f.size > 1_000_000) return setFileErr("File too large (max 1 MB).");
+    try { loadRouteText((await readTableFile(f)).text, f.name); } catch (e) { setFileErr(e instanceof Error ? e.message : "Couldn't read that file."); }
+  }
+  // A route dropped on the demo page arrives here.
+  useEffect(() => {
+    const p = takePendingFile("route");
+    if (p) loadRouteText(p.text, p.name);
+  }, []);
   const toggle = (k: VulnKey) => setProfile((p) => ({ ...p, [k]: !p[k] }));
   const sel = result && selected !== null ? result.sections[selected] : null;
 
@@ -342,8 +354,8 @@ function RouteCheck() {
                   </button>
                 ))}
               </div>
-              <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
-              <button type="button" onClick={() => fileRef.current?.click()} className={`${btn.text} mt-3`}><Upload className="h-4 w-4" /> Upload a route (CSV with lat, lon)</button>
+              <input ref={fileRef} type="file" accept={TABLE_ACCEPT} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
+              <button type="button" onClick={() => fileRef.current?.click()} className={`${btn.text} mt-3`}><Upload className="h-4 w-4" /> Upload a route (CSV or Excel with lat, lon)</button>
               {fileErr && <p role="alert" className="mt-2 text-sm text-bad">{fileErr}</p>}
               <p className="mt-2 text-xs text-subtle">Example routes are illustrative, not real flight plans. <Link to="/demo" hash="pre-flight" className="underline underline-offset-2 hover:text-foreground">Sample route files and the format</Link></p>
             </Fieldset>
@@ -431,7 +443,7 @@ function RouteCheck() {
             </Fieldset>
 
             <div className="px-6 py-6 text-xs leading-5 text-subtle sm:px-8">
-              Decision support only. Aircraft see GPS quality at altitude and can miss low-power jammers near the ground; Witnessmark ground sensors are not deployed yet. Ground consequence uses a coarse London model unless you override it. All weights are provisional. <Link to="/method" hash="pre-flight" className="underline">Read the method</Link>.
+              Decision support only. Aircraft see GPS quality at altitude and can miss low-power jammers near the ground; Witnessmark's own interference data is not yet includedd yet. Ground consequence uses a coarse London model unless you override it. All weights are provisional. <Link to="/method" hash="pre-flight" className="underline">Read the method</Link>.
             </div>
           </div>
         </div>

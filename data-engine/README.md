@@ -58,6 +58,7 @@ Simulated data is clearly labelled and uses a made-up point in the North Sea.
 
 ### Demo data for the website
 - `python make_demo_data.py` rewrites the sample routes and flight logs in `public/demo-data/` (all simulated).
+- `python make_excel_samples.py` writes an Excel (.xlsx) copy of every sample CSV (needs `pip install openpyxl`).
 - `python witnessmark_sensor.py simulate --scenario jamming --hours 1.5 --seed 3 --csv ../public/demo-data/sensor-jamming-event.csv` writes a sample sensor log. Real sensor logs in the same format can be uploaded on the website's Site monitoring page.
 
 ### See what it found

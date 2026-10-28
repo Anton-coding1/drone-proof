@@ -5,14 +5,14 @@ import { seo } from "@/lib/seo";
 import { PHOTOS } from "@/lib/photos";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: seo({ title: "About", description: "Witnessmark is an early-stage start-up founded by engineering students in London, building an independent record of GPS jamming and spoofing at street level, starting with drones." }) }),
+  head: () => ({ meta: seo({ title: "About", description: "Witnessmark is an early-stage start-up founded by engineering students in London, building independent intelligence on GPS jamming and spoofing for drones." }) }),
   component: About,
 });
 
 function About() {
   return (
     <Page overlay>
-      <PageIntro photo={PHOTOS.cityRoof} eyebrow="About" title="A neutral witness for the signals machines rely on." lead="Witnessmark is an early-stage start-up founded by engineering students at Imperial College London. We're building an independent record of GPS jamming and spoofing at street level, starting with drones." />
+      <PageIntro photo={PHOTOS.cityRoof} eyebrow="About" title="A neutral witness for the signals machines rely on." lead="Witnessmark is an early-stage start-up founded by engineering students at Imperial College London. We're building independent intelligence on GPS jamming and spoofing for drones." />
       <Container narrow className="py-16">
         <Prose>
           <h2>Why we started</h2>
@@ -22,11 +22,9 @@ function About() {
           <ul>
             <li><strong>Pre-flight check</strong>: a GO / CAUTION / NO-GO interference check for planned routes.</li>
             <li><strong>Incident evidence</strong>: independent, tamper-evident evidence of GPS interference for drone claims.</li>
-            <li><strong>Ground sensors</strong>: small receive-only rooftop receivers that hear the low-power jammers aircraft miss. They are in development; they only listen and never transmit.</li>
-            <li><strong>Site monitoring</strong>: the same sensors alerting ports, airports, rail and venues when GPS around them is attacked.</li>
           </ul>
           <h2>Where we're going</h2>
-          <p>Satellites and aircraft already watch for interference from above. What's missing is a trustworthy record at street level, where drones fly and where people and infrastructure depend on GPS. We're starting with drones because the need is immediate: flights beyond the pilot's sight are set to become routine and every loss raises the question of cause. The same record then serves insurers and any site that relies on GPS position or time.</p>
+          <p>Drones are starting to fly where no pilot can see them, and every loss raises the question of cause. We're starting with the two decisions that matter most: whether to fly, and what happened. We're currently collecting our own interference data to make both more accurate.</p>
           <h2>Where we are</h2>
           <p>We're a two-person founding team with a working prototype, a published method and no paying customers yet. This version of the site is a demo: every feature can be tried with your own files or with simulated samples.</p>
           <p>Witnessmark is independent and is not endorsed by Imperial College London or by any data provider named on this site.</p>

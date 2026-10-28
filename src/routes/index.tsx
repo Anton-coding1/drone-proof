@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShieldCheck, BookOpen, Fingerprint, Ear } from "lucide-react";
+import { ShieldCheck, BookOpen, Fingerprint, Database } from "lucide-react";
 import heroImage from "@/assets/hero-drone-poster.jpg";
 import { Page } from "@/components/wm/Page";
 import { DecisionDemo } from "@/components/home/DecisionDemo";
@@ -10,7 +10,7 @@ import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: seo({ title: "Witnessmark", description: "Independent intelligence on GPS jamming and spoofing at street level: a GO / CAUTION / NO-GO check before a drone flies, tamper-evident evidence after an incident, and sensors that hear what aircraft miss." }),
+    meta: seo({ title: "Witnessmark", description: "Independent intelligence on GPS jamming and spoofing for drones: a GO / CAUTION / NO-GO check before a drone flies, and tamper-evident evidence after an incident." }),
     links: [{ rel: "preload", as: "image", href: heroImage }],
   }),
   component: Home,
@@ -33,7 +33,7 @@ function Home() {
           </h1>
           <div className="mt-9 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
             <p className="max-w-md text-[18px] leading-[28px] text-white/80">
-              Independent intelligence on GPS jamming and spoofing at street level. A decision before a drone flies, and evidence after an incident.
+              Independent intelligence on GPS jamming and spoofing for drones. A decision before a drone flies, and evidence after an incident.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/demo" className={btn.primary}>Try it with your data</Link>
@@ -83,34 +83,13 @@ function Home() {
         <section aria-labelledby="products-h" className="border-t py-24 sm:py-32">
           <div className="mx-auto max-w-6xl px-6 sm:px-8">
             <p className="eyebrow">The product</p>
-            <h2 id="products-h" className="mt-3 max-w-2xl text-[32px] leading-[38px] sm:text-[44px] sm:leading-[50px]">One product. Three jobs.</h2>
-            <p className="mt-4 max-w-2xl text-[17px] leading-7 text-muted-foreground">Witnessmark keeps one independent record of GPS interference, from aircraft reports, drone logs and our own ground sensors. Each feature turns it into a decision someone has to make. <Link to="/product" className="whitespace-nowrap text-foreground underline underline-offset-4">See how it fits together</Link></p>
-            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <h2 id="products-h" className="mt-3 max-w-2xl text-[32px] leading-[38px] sm:text-[44px] sm:leading-[50px]">Before the flight, and after it.</h2>
+            <p className="mt-4 max-w-2xl text-[17px] leading-7 text-muted-foreground">Witnessmark keeps one independent record of GPS interference and turns it into the decision someone has to make. We're currently collecting our own interference data. Today Witnessmark uses public aircraft reports and the files you upload; the demo samples are simulated. <Link to="/product" className="whitespace-nowrap text-foreground underline underline-offset-4">See how it fits together</Link></p>
+            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
               <ProductCard to="/pre-flight" photo={PHOTOS.london} when="Before the flight" name="Pre-flight check" line="GO, CAUTION or NO-GO for every section of a planned route, with reasons and a PDF for your safety case." />
               <ProductCard to="/evidence" photo={PHOTOS.drone} when="After an incident" name="Incident evidence" line="Upload a flight log. Two independent witnesses give a neutral, tamper-evident finding for the claim." />
-              <ProductCard to="/monitor" photo={PHOTOS.tower} when="All the time" name="Site monitoring" line="Ground sensors that alert ports, airports, rail and venues when GPS around them is jammed or spoofed." />
             </div>
           </div>
-        </section>
-
-        {/* SENSORS */}
-        <section aria-labelledby="sensors-h" className="relative overflow-hidden border-t">
-          <Photo photo={PHOTOS.rooftop} className="absolute inset-0 h-full w-full" sizes="100vw" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,9,10,0.92)_0%,rgba(8,9,10,0.7)_45%,rgba(8,9,10,0.15)_100%)]" aria-hidden="true" />
-          <div className="relative mx-auto flex min-h-[620px] max-w-6xl flex-col justify-center px-6 py-24 sm:px-8">
-            <p className="text-sm text-white/60">In development</p>
-            <h2 id="sensors-h" className="mt-3 max-w-[16ch] text-[32px] leading-[38px] text-white sm:text-[48px] sm:leading-[54px]">A witness at street level.</h2>
-            <p className="mt-5 max-w-md text-[17px] leading-[28px] text-white/75">
-              Aircraft fly too high to hear the small jammers that bring drones down. Witnessmark's rooftop receivers listen for them directly, and never transmit.
-            </p>
-            <dl className="mt-10 grid max-w-lg grid-cols-3 gap-6 border-t border-white/15 pt-6">
-              {[["Listen only", "Receive-only, legal to operate"], ["Multi-band", "Sees what single-band misses"], ["Private", "No address ever leaves the device"]].map(([t, d]) => (
-                <div key={t}><dt className="text-[15px] text-white">{t}</dt><dd className="mt-1 text-sm leading-5 text-white/60">{d}</dd></div>
-              ))}
-            </dl>
-            <Link to="/network" className="mt-10 inline-flex items-center gap-2 text-sm font-medium text-white underline-offset-4 hover:underline">How the sensors work <span aria-hidden="true">→</span></Link>
-          </div>
-          <PhotoCredit photo={PHOTOS.rooftop} className="absolute bottom-4 right-6 sm:right-8" />
         </section>
 
         {/* TRUST */}
@@ -140,7 +119,7 @@ function Home() {
           <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-24 sm:px-8 sm:py-32 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="max-w-[18ch] text-[32px] leading-[38px] sm:text-[44px] sm:leading-[50px]">Try it with your own data.</h2>
-              <p className="mt-4 max-w-md text-muted-foreground">Every feature accepts a file: a route, a flight log or a sensor log. Use your own, or the samples provided.</p>
+              <p className="mt-4 max-w-md text-muted-foreground">Every feature accepts a spreadsheet: a planned route or a drone flight log, as CSV or Excel. Use your own, or the samples provided.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link to="/demo" className={btn.primary}>Try it</Link>
@@ -157,7 +136,7 @@ const TRUST: [typeof ShieldCheck, string, string][] = [
   [ShieldCheck, "Independent", "Not a drone maker, an insurer or a defence contractor. The same checks run whoever asks."],
   [BookOpen, "Published method", "Every rule, threshold and limitation is public and versioned, so results can be challenged."],
   [Fingerprint, "Tamper-evident", "Uploads are fingerprinted on our server, and every action on a case is chained."],
-  [Ear, "Receive-only sensors", "Our sensors only listen. Nothing is ever transmitted, and sensor locations stay private."],
+  [Database, "Clear about its data", "Every result says which data it used, how much and how recent. Simulated data is always labelled."],
 ];
 
 const WHY_NOW = [

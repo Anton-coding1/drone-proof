@@ -1,17 +1,9 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Upload, Loader2, Download, AlertCircle } from "lucide-react";
-import { parseFlightCsv } from "@/lib/csv";
-import { uploadFlightLog } from "@/lib/upload.functions";
-import { rememberCase } from "@/lib/browserStore";
+import { submitFlightLog } from "@/lib/flightUpload";
+import { TABLE_ACCEPT } from "@/lib/tabular";
 
-
-function toBase64(buf: ArrayBuffer) {
-  const bytes = new Uint8Array(buf);
-  let bin = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
-}
 
 export function UploadBox() {
   const input = useRef<HTMLInputElement>(null);
@@ -22,16 +14,9 @@ export function UploadBox() {
 
   async function handle(file: File) {
     setErr(null);
-    if (!/\.csv$/i.test(file.name)) return setErr("Please choose a .csv file.");
-    if (file.size > 5_000_000) return setErr("File too large: maximum 5 MB.");
     setBusy(true);
     try {
-      const buf = await file.arrayBuffer();
-      // Quick check in the browser for instant feedback; the server re-checks everything.
-      const parsed = parseFlightCsv(new TextDecoder().decode(buf));
-      if ("error" in parsed) { setErr(parsed.error); return; }
-      const { id } = await uploadFlightLog({ data: { filename: file.name.slice(0, 255), fileBase64: toBase64(buf) } });
-      rememberCase(id);
+      const id = await submitFlightLog(file);
       navigate({ to: "/analysis/$scenarioId", params: { scenarioId: id } });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Upload failed.");
@@ -58,13 +43,13 @@ export function UploadBox() {
           {busy ? "Analysing your flight log…" : drag ? "Drop to analyse" : "Upload a flight log"}
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-          Drag a CSV file here, or choose one from your computer. Its SHA-256 fingerprint is computed on our server from the exact bytes received. This is a prototype, so please don't upload confidential logs.
+          Drag a CSV or Excel (.xlsx) file here, or choose one from your computer. Its SHA-256 fingerprint is computed on our server from the exact bytes received. This is a prototype, so please don't upload confidential logs.
         </p>
         <p className="mx-auto mt-3 max-w-xl font-mono text-xs leading-relaxed text-muted-foreground/80">
           t, lat, lon, alt_m, satellites, accuracy_m, fix_type, jamming_state*, spoofing_state*
-          <span className="block">* optional · CSV up to 5 MB</span>
+          <span className="block">* optional · CSV or Excel (.xlsx), first sheet, up to 5 MB</span>
         </p>
-        <input ref={input} type="file" accept=".csv,text/csv" className="hidden"
+        <input ref={input} type="file" accept={TABLE_ACCEPT} className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f); e.target.value = ""; }} />
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <button type="button" onClick={() => input.current?.click()} disabled={busy}

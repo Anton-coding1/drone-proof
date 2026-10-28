@@ -1,19 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Plane, FileText, RadioTower, Route as RouteIcon, FileSearch, Siren, Database } from "lucide-react";
+import { ArrowRight, Plane, FileText, Route as RouteIcon, FileSearch, Database } from "lucide-react";
 import { Page } from "@/components/wm/Page";
 import { Container, PageIntro, SectionHeading, btn } from "@/components/wm/ui";
 import { PHOTOS } from "@/lib/photos";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/product")({
-  head: () => ({ meta: seo({ title: "Product", description: "Witnessmark is one product: an independent record of GPS jamming and spoofing, used for pre-flight checks, incident evidence and site monitoring." }) }),
+  head: () => ({ meta: seo({ title: "Product", description: "Witnessmark is one product: an independent record of GPS jamming and spoofing for drones, used for pre-flight checks and incident evidence." }) }),
   component: Product,
 });
 
 const SOURCES = [
   { icon: Plane, name: "Aircraft reports", text: "GPS quality reported by aircraft overhead, via the Stanford GPS Laboratory.", status: "In use" },
   { icon: FileText, name: "Drone flight logs", text: "The drone's own receiver, uploaded by the operator or claimant and fingerprinted on arrival.", status: "In use" },
-  { icon: RadioTower, name: "Ground sensors", text: "Our receive-only rooftop receivers, which hear the small jammers aircraft miss.", status: "In development" },
+  { icon: Database, name: "Our own data", text: "We're currently collecting our own interference data to sit alongside the public reports.", status: "Being collected" },
 ];
 
 const FEATURES = [
@@ -26,11 +26,6 @@ const FEATURES = [
     icon: FileSearch, name: "Incident evidence", when: "After an incident", status: "Prototype", to: "/evidence", hash: undefined,
     who: "Insurers, brokers, loss adjusters and operators.",
     gets: "A neutral finding on whether GPS interference, the pilot or the hardware is the likely cause, with a fingerprinted case file.",
-  },
-  {
-    icon: Siren, name: "Site monitoring", when: "All the time", status: "Prototype", to: "/monitor", hash: undefined,
-    who: "Ports, airports, rail, telecoms and venues that rely on GPS.",
-    gets: "An alert when GPS at the site is jammed or spoofed, and a record of every event for incident reviews.",
   },
 ];
 
@@ -46,7 +41,7 @@ function Product() {
         photo={PHOTOS.cityRoof}
         eyebrow="The product"
         title="One product for GPS interference."
-        lead="Witnessmark keeps an independent record of GPS jamming and spoofing, built from aircraft reports, drone logs and our own ground sensors. It turns that record into the decision each person needs: whether to fly, what caused an incident, or whether a site is under attack."
+        lead="Witnessmark keeps an independent record of GPS jamming and spoofing, built from aircraft reports and drone flight logs. It turns that record into the decision each person needs: whether to fly, or what caused an incident. We're currently collecting our own data to add to it."
       >
         <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link to="/pre-flight/check" className={btn.primary}>Try a pre-flight check →</Link>
@@ -56,7 +51,7 @@ function Product() {
 
       <section className="py-24">
         <Container>
-          <SectionHeading eyebrow="How it fits together" title="Three sources. One record. Three jobs." lead="Every feature reads the same record, so a route check, a claim and a site alert never tell different stories." />
+          <SectionHeading eyebrow="How it fits together" title="Three sources. One record. Two jobs." lead="Every feature reads the same record, so a route check, a claim and a site alert never tell different stories." />
           <div className="mt-14 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_auto_0.8fr_auto_1fr]">
             <div>
               <p className="eyebrow">Sources</p>
@@ -129,7 +124,7 @@ function Product() {
             <li><span className="text-foreground">Reasons, confidence and limits</span> on every result, never just a score.</li>
             <li><span className="text-foreground">A published, versioned method</span>, so anyone can follow and challenge the reasoning. <Link to="/method" className="text-foreground underline underline-offset-4">Read it</Link></li>
             <li><span className="text-foreground">Fingerprints and an audit trail</span>, so records can be checked later.</li>
-            <li><span className="text-foreground">Receive-only sensors and private locations.</span> We never transmit, and never publish where a sensor is.</li>
+            <li><span className="text-foreground">Clear about its data.</span> Every result says which data it used; simulated data is always labelled.</li>
           </ul>
         </Container>
       </section>
