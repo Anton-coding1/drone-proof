@@ -15,7 +15,7 @@ function Privacy() {
       <PageIntro eyebrow="Legal" title="Privacy notice" lead="In short: we collect as little as possible, we don't sell data, and we tell you plainly what happens to flight logs." />
       <Container narrow className="py-16">
         <Prose>
-          <p className="text-sm text-subtle">Last updated: 16 October 2026. Witnessmark is an early-stage prototype run by its founders; company details will be added once the company is registered.</p>
+          <p className="text-sm text-subtle">Last updated: 16 October 2026. Witnessmark is an early-stage prototype run by its founder; company details will be added once the company is registered.</p>
           <h2>What we collect</h2>
           <ul>
             <li><strong>Flight logs you upload</strong>: GPS readings, file name, upload time and a SHA-256 fingerprint. Logs can include location data, so please remove personal details from file names.</li>

@@ -2,17 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Page } from "@/components/wm/Page";
 import { Container, PageIntro, Prose, btn } from "@/components/wm/ui";
 import { seo } from "@/lib/seo";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { PHOTOS } from "@/lib/photos";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: seo({ title: "About", description: "Witnessmark is an early-stage start-up founded by engineering students in London, building independent intelligence on GPS jamming and spoofing for drones." }) }),
+  head: () => ({ meta: seo({ title: "About", description: "Witnessmark is an early-stage start-up built by a single founder, an engineering student in London, building independent intelligence on GPS jamming and spoofing for drones." }) }),
   component: About,
 });
 
 function About() {
   return (
     <Page overlay>
-      <PageIntro photo={PHOTOS.cityRoof} eyebrow="About" title="A neutral witness for the signals machines rely on." lead="Witnessmark is an early-stage start-up founded by engineering students at Imperial College London. We're building independent intelligence on GPS jamming and spoofing for drones." />
+      <PageIntro photo={PHOTOS.cityRoof} eyebrow="About" title="A neutral witness for the signals machines rely on." lead="Witnessmark is an early-stage start-up built by a single founder, an engineering student at Imperial College London. It provides independent intelligence on GPS jamming and spoofing for drones." />
       <Container narrow className="py-16">
         <Prose>
           <h2>Why we started</h2>
@@ -25,8 +26,11 @@ function About() {
           </ul>
           <h2>Where we're going</h2>
           <p>Drones are starting to fly where no pilot can see them, and every loss raises the question of cause. We're starting with the two decisions that matter most: whether to fly, and what happened. We're currently collecting our own interference data to make both more accurate.</p>
+          <h2>Who builds it</h2>
+          <p>I built Witnessmark myself: the idea, both decision methods, the website, the airspace and live-conditions checks, and the software that collects our own data. It started as a project called DroneProof, and Witnessmark is that project grown into one product.</p>
           <h2>Where we are</h2>
-          <p>We're a two-person founding team with a working prototype, a published method and no paying customers yet. This version of the site is a demo: every feature can be tried with your own files or with simulated samples.</p>
+          <p>A working prototype, a published method and no paying customers yet. This version of the site is a demo: every feature can be tried with your own files or with simulated samples.</p>
+          <p>Questions, feedback or a pilot project: email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
           <p>Witnessmark is independent and is not endorsed by Imperial College London or by any data provider named on this site.</p>
         </Prose>
         <div className="mt-12 flex flex-wrap gap-3">

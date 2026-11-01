@@ -1,7 +1,6 @@
 export const BRAND = "Witnessmark";
 export const FEATURES = { preflight: "Pre-flight check", evidence: "Incident evidence" } as const;
-// TODO(founder): replace with your real inbox before sharing the site.
-export const CONTACT_EMAIL = "contact@example.com";
+export const CONTACT_EMAIL = "AntonN11@protonmail.com";
 export const CONTACT_IS_PLACEHOLDER = CONTACT_EMAIL.endsWith("@example.com");
 export const METHOD_VERSION = "v0.4";
 export const ROUTE_METHOD_VERSION = "v0.3";
